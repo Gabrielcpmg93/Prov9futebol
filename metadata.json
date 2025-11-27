@@ -1,0 +1,5 @@
+{
+  "name": "Gerenciador de Futebol",
+  "description": "Uma interface de aplicativo de gerenciamento de futebol para acessar várias funcionalidades do jogo, como pular semanas, gerenciar o time e visualizar notícias.",
+  "requestFramePermissions": []
+}
