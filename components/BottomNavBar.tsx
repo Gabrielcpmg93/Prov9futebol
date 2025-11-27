@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { HomeIcon, SocialIcon, PlayIcon, UsersIcon, MarketIcon } from './icons';
 import type { NavItem } from '../types';
 
@@ -16,8 +16,12 @@ const NavItemComponent: React.FC<{ item: NavItem; isActive: boolean; onClick: ()
   );
 };
 
-const BottomNavBar: React.FC = () => {
-  const [activeIndex, setActiveIndex] = useState(0);
+interface BottomNavBarProps {
+    activeLabel: string;
+    onNavigate: (label: string) => void;
+}
+
+const BottomNavBar: React.FC<BottomNavBarProps> = ({ activeLabel, onNavigate }) => {
 
   const navItems: NavItem[] = [
     { icon: (isActive) => <HomeIcon filled={isActive} />, label: 'Início' },
@@ -34,8 +38,8 @@ const BottomNavBar: React.FC = () => {
           <NavItemComponent
             key={index}
             item={item}
-            isActive={activeIndex === index}
-            onClick={() => setActiveIndex(index)}
+            isActive={activeLabel === item.label}
+            onClick={() => onNavigate(item.label)}
           />
         ))}
       </div>

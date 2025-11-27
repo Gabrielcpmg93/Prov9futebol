@@ -1,8 +1,11 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import ActionListItem from './components/ActionListItem';
 import QuickActionCard from './components/QuickActionCard';
 import BottomNavBar from './components/BottomNavBar';
+import TeamSelectionScreen from './screens/TeamSelectionScreen';
+import UpdatesScreen from './screens/UpdatesScreen';
+import GameScreen from './screens/GameScreen';
 import {
   CalendarIcon,
   SirenIcon,
@@ -13,11 +16,14 @@ import {
   ListIcon,
   NewspaperIcon,
   BellIcon,
-  ArrowRightIcon
 } from './components/icons';
-import type { ActionListItemData, QuickActionCardData } from './types';
+import type { ActionListItemData, QuickActionCardData, Team } from './types';
+import { teams } from './data/teams';
 
 const App: React.FC = () => {
+  const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
+  const [activeScreen, setActiveScreen] = useState('Início');
+
   const mainActions: Omit<ActionListItemData, 'onClick'>[] = [
     {
       icon: <CalendarIcon />,
@@ -77,7 +83,10 @@ const App: React.FC = () => {
     },
   ];
 
-  const quickActions: Omit<QuickActionCardData, 'onClick'>[] = [
+  // FIX: Corrected the type definition for quickActions.
+  // The original type had incorrect precedence for the intersection (&) and array ([]) types.
+  // This simplifies the type to correctly represent an array of QuickActionCardData objects without the `onClick` property.
+  const quickActions: (Omit<QuickActionCardData, 'onClick' | 'title'> & { title: string })[] = [
     {
       icon: <ListIcon />,
       bgColor: 'bg-green-100',
@@ -97,33 +106,59 @@ const App: React.FC = () => {
       title: 'Atualizações',
     },
   ];
+  
+  const handleQuickActionClick = (title: string) => {
+    if (title === 'Atualizações') {
+      setActiveScreen('Atualizações');
+    } else {
+      alert(`${title} clicado!`);
+    }
+  };
+
+  if (!selectedTeam) {
+    return <TeamSelectionScreen teams={teams} onSelectTeam={setSelectedTeam} />;
+  }
+
+  const renderContent = () => {
+    switch (activeScreen) {
+      case 'Atualizações':
+        return <UpdatesScreen onBack={() => setActiveScreen('Início')} />;
+      case 'Jogar':
+        return <GameScreen userTeam={selectedTeam} opponentTeam={teams.find(t => t.id !== selectedTeam.id)!} />;
+      case 'Início':
+      default:
+        return (
+           <div className="p-4">
+            <div className="space-y-3">
+              {mainActions.map((action, index) => (
+                <ActionListItem
+                  key={index}
+                  {...action}
+                  onClick={() => alert(`${action.title} clicado!`)}
+                />
+              ))}
+            </div>
+
+            <div className="grid grid-cols-3 gap-3 mt-4">
+              {quickActions.map((action, index) => (
+                <QuickActionCard
+                  key={index}
+                  {...action}
+                  onClick={() => handleQuickActionClick(action.title)}
+                />
+              ))}
+            </div>
+          </div>
+        );
+    }
+  };
 
   return (
     <div className="flex flex-col h-screen max-w-md mx-auto bg-slate-50 font-sans">
       <main className="flex-grow overflow-y-auto pb-24">
-        <div className="p-4">
-          <div className="space-y-3">
-            {mainActions.map((action, index) => (
-              <ActionListItem
-                key={index}
-                {...action}
-                onClick={() => alert(`${action.title} clicado!`)}
-              />
-            ))}
-          </div>
-
-          <div className="grid grid-cols-3 gap-3 mt-4">
-            {quickActions.map((action, index) => (
-              <QuickActionCard
-                key={index}
-                {...action}
-                onClick={() => alert(`${action.title} clicado!`)}
-              />
-            ))}
-          </div>
-        </div>
+       {renderContent()}
       </main>
-      <BottomNavBar />
+      <BottomNavBar activeLabel={activeScreen} onNavigate={setActiveScreen} />
     </div>
   );
 };

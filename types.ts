@@ -25,3 +25,9 @@ export interface NavItem {
     icon: (isActive: boolean) => ReactElement;
     label: string;
 }
+
+export interface Team {
+  id: string;
+  name: string;
+  logo: string; 
+}
