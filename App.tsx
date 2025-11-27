@@ -18,7 +18,7 @@ import {
 import type { ActionListItemData, QuickActionCardData } from './types';
 
 const App: React.FC = () => {
-  const mainActions: ActionListItemData[] = [
+  const mainActions: Omit<ActionListItemData, 'onClick'>[] = [
     {
       icon: <CalendarIcon />,
       bgColor: 'bg-indigo-100',
@@ -77,7 +77,7 @@ const App: React.FC = () => {
     },
   ];
 
-  const quickActions: QuickActionCardData[] = [
+  const quickActions: Omit<QuickActionCardData, 'onClick'>[] = [
     {
       icon: <ListIcon />,
       bgColor: 'bg-green-100',
@@ -106,12 +106,8 @@ const App: React.FC = () => {
             {mainActions.map((action, index) => (
               <ActionListItem
                 key={index}
-                icon={action.icon}
-                bgColor={action.bgColor}
-                iconColor={action.iconColor}
-                title={action.title}
-                subtitle={action.subtitle}
-                action={action.action}
+                {...action}
+                onClick={() => alert(`${action.title} clicado!`)}
               />
             ))}
           </div>
@@ -120,10 +116,8 @@ const App: React.FC = () => {
             {quickActions.map((action, index) => (
               <QuickActionCard
                 key={index}
-                icon={action.icon}
-                bgColor={action.bgColor}
-                iconColor={action.iconColor}
-                title={action.title}
+                {...action}
+                onClick={() => alert(`${action.title} clicado!`)}
               />
             ))}
           </div>

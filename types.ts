@@ -10,6 +10,7 @@ export interface ActionListItemData {
   title: string;
   subtitle: string;
   action: ActionType;
+  onClick?: () => void;
 }
 
 export interface QuickActionCardData {
@@ -17,6 +18,7 @@ export interface QuickActionCardData {
   bgColor: string;
   iconColor: string;
   title: string;
+  onClick?: () => void;
 }
 
 export interface NavItem {

@@ -3,9 +3,9 @@ import React from 'react';
 import { ArrowRightIcon } from './icons';
 import type { ActionListItemData } from '../types';
 
-const ActionListItem: React.FC<ActionListItemData> = ({ icon, bgColor, iconColor, title, subtitle, action }) => {
+const ActionListItem: React.FC<ActionListItemData> = ({ icon, bgColor, iconColor, title, subtitle, action, onClick }) => {
   return (
-    <div className="bg-white rounded-2xl p-3 flex items-center shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+    <button onClick={onClick} className="w-full text-left bg-white rounded-2xl p-3 flex items-center shadow-sm hover:shadow-md transition-shadow cursor-pointer">
       <div className={`p-3 rounded-xl ${bgColor}`}>
         <div className={`w-6 h-6 ${iconColor}`}>
           {icon}
@@ -26,7 +26,7 @@ const ActionListItem: React.FC<ActionListItemData> = ({ icon, bgColor, iconColor
           </div>
         )}
       </div>
-    </div>
+    </button>
   );
 };
 
