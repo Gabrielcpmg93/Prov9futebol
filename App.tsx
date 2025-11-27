@@ -6,6 +6,7 @@ import BottomNavBar from './components/BottomNavBar';
 import TeamSelectionScreen from './screens/TeamSelectionScreen';
 import UpdatesScreen from './screens/UpdatesScreen';
 import GameScreen from './screens/GameScreen';
+import GameMenuScreen from './screens/GameMenuScreen';
 import {
   CalendarIcon,
   SirenIcon,
@@ -83,9 +84,6 @@ const App: React.FC = () => {
     },
   ];
 
-  // FIX: Corrected the type definition for quickActions.
-  // The original type had incorrect precedence for the intersection (&) and array ([]) types.
-  // This simplifies the type to correctly represent an array of QuickActionCardData objects without the `onClick` property.
   const quickActions: (Omit<QuickActionCardData, 'onClick' | 'title'> & { title: string })[] = [
     {
       icon: <ListIcon />,
@@ -124,7 +122,13 @@ const App: React.FC = () => {
       case 'Atualizações':
         return <UpdatesScreen onBack={() => setActiveScreen('Início')} />;
       case 'Jogar':
-        return <GameScreen userTeam={selectedTeam} opponentTeam={teams.find(t => t.id !== selectedTeam.id)!} />;
+        return <GameMenuScreen onStartMatch={() => setActiveScreen('AssistindoPartida')} />;
+      case 'AssistindoPartida':
+        return <GameScreen 
+                  userTeam={selectedTeam} 
+                  opponentTeam={teams.find(t => t.id !== selectedTeam.id)!} 
+                  onBack={() => setActiveScreen('Jogar')} 
+               />;
       case 'Início':
       default:
         return (
