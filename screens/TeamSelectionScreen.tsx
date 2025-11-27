@@ -1,4 +1,3 @@
-
 import React from 'react';
 import type { Team } from '../types';
 
@@ -14,7 +13,6 @@ const TeamSelectionScreen: React.FC<TeamSelectionScreenProps> = ({ teams, onSele
       <div className="flex-grow overflow-y-auto space-y-3">
         {teams.map((team) => (
           <div key={team.id} className="bg-white rounded-2xl p-4 flex items-center shadow-md">
-            <img src={team.logo} alt={`${team.name} logo`} className="w-12 h-12 mr-4" />
             <span className="font-semibold text-lg text-gray-700 flex-grow">{team.name}</span>
             <button
               onClick={() => onSelectTeam(team)}

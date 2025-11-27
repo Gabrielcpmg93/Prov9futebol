@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import type { Team } from '../types';
 
@@ -37,13 +36,13 @@ const GameScreen: React.FC<GameScreenProps> = ({ userTeam, opponentTeam }) => {
     <div className="p-4 flex flex-col h-full bg-green-800 text-white">
       <header className="text-center mb-4">
         <p className="font-bold">Brasileirão Série A - Partida 1 de 38</p>
-        <div className="flex justify-center items-center text-4xl font-bold my-2">
-            <div className="flex items-center">
+        <div className="flex justify-center items-center font-bold my-2">
+            <div className="flex items-center text-xl">
                 <img src={userTeam.logo} alt={userTeam.name} className="w-10 h-10 mr-3"/>
                 <span>{userTeam.name}</span>
             </div>
-            <div className="mx-4">{userScore} - {opponentScore}</div>
-            <div className="flex items-center">
+            <div className="mx-4 text-4xl">{userScore} - {opponentScore}</div>
+            <div className="flex items-center text-xl">
                 <span>{opponentTeam.name}</span>
                 <img src={opponentTeam.logo} alt={opponentTeam.name} className="w-10 h-10 ml-3"/>
             </div>
@@ -53,7 +52,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ userTeam, opponentTeam }) => {
         </div>
       </header>
       <main className="flex-grow flex items-center justify-center">
-        <div className="w-full aspect-[2/3] bg-green-600 border-4 border-white border-opacity-50 relative">
+        <div className="w-3/4 aspect-[2/3] bg-green-600 border-4 border-white border-opacity-50 relative">
           {/* Field Markings */}
           <div className="absolute top-1/2 left-0 right-0 h-1 bg-white bg-opacity-50 -translate-y-1/2"></div>
           <div className="absolute top-1/2 left-1/2 w-24 h-24 border-2 border-white border-opacity-50 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
