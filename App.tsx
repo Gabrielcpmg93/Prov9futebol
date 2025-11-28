@@ -9,6 +9,7 @@ import GameScreen from './screens/GameScreen';
 import GameMenuScreen from './screens/GameMenuScreen';
 import NewsScreen from './screens/NewsScreen';
 import TableScreen from './screens/TableScreen';
+import CalendarScreen from './screens/CalendarScreen';
 import {
   CalendarIcon,
   SirenIcon,
@@ -206,11 +207,16 @@ const App: React.FC = () => {
 
   const handleMainActionClick = (title: string) => {
     if (title === 'Calendário') {
-      setFriendlyMatchScheduled(true);
-      alert('Amistoso agendado! Vá para o menu "Jogar" para disputar a partida.');
+      setActiveScreen('Calendário');
     } else {
       alert(`${title} clicado!`);
     }
+  };
+
+  const handleScheduleFriendlyMatch = () => {
+    setFriendlyMatchScheduled(true);
+    setActiveScreen('Início');
+    alert('Amistoso agendado! Vá para o menu "Jogar" para disputar a partida.');
   };
 
 
@@ -226,6 +232,8 @@ const App: React.FC = () => {
         return <NewsScreen articles={newsArticles} onBack={() => setActiveScreen('Início')} />;
       case 'Tabela':
         return <TableScreen table={leagueTable} onBack={() => setActiveScreen('Início')} userTeamId={selectedTeam.id} />;
+      case 'Calendário':
+        return <CalendarScreen onBack={() => setActiveScreen('Início')} onSchedule={handleScheduleFriendlyMatch} />;
       case 'Jogar':
         return <GameMenuScreen 
                   onStartMatch={() => setActiveScreen('AssistindoPartida')}

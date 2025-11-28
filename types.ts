@@ -74,3 +74,8 @@ export interface GameMenuScreenProps {
   isFriendlyMatchAvailable: boolean;
   onStartFriendlyMatch: () => void;
 }
+
+export interface CalendarScreenProps {
+  onBack: () => void;
+  onSchedule: () => void;
+}
