@@ -40,3 +40,16 @@ export interface NewsArticle {
   userScore: number;
   opponentScore: number;
 }
+
+export interface TableEntry {
+  teamId: string;
+  teamName: string;
+  played: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  goalDifference: number;
+  points: number;
+}

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ActionListItem from './components/ActionListItem';
 import QuickActionCard from './components/QuickActionCard';
 import BottomNavBar from './components/BottomNavBar';
@@ -8,6 +8,7 @@ import UpdatesScreen from './screens/UpdatesScreen';
 import GameScreen from './screens/GameScreen';
 import GameMenuScreen from './screens/GameMenuScreen';
 import NewsScreen from './screens/NewsScreen';
+import TableScreen from './screens/TableScreen';
 import {
   CalendarIcon,
   SirenIcon,
@@ -19,7 +20,7 @@ import {
   NewspaperIcon,
   BellIcon,
 } from './components/icons';
-import type { ActionListItemData, QuickActionCardData, Team, NewsArticle } from './types';
+import type { ActionListItemData, QuickActionCardData, Team, NewsArticle, TableEntry } from './types';
 import { teams } from './data/teams';
 
 const App: React.FC = () => {
@@ -27,6 +28,25 @@ const App: React.FC = () => {
   const [activeScreen, setActiveScreen] = useState('Início');
   const [newsArticles, setNewsArticles] = useState<NewsArticle[]>([]);
   const [matchDay, setMatchDay] = useState(1);
+  const [leagueTable, setLeagueTable] = useState<TableEntry[]>([]);
+
+  useEffect(() => {
+    if (selectedTeam) {
+      const initialTable = teams.map(team => ({
+        teamId: team.id,
+        teamName: team.name,
+        played: 0,
+        wins: 0,
+        draws: 0,
+        losses: 0,
+        goalsFor: 0,
+        goalsAgainst: 0,
+        goalDifference: 0,
+        points: 0,
+      }));
+      setLeagueTable(initialTable);
+    }
+  }, [selectedTeam]);
 
   const mainActions: Omit<ActionListItemData, 'onClick'>[] = [
     {
@@ -133,6 +153,36 @@ const App: React.FC = () => {
       opponentScore,
     };
 
+    setLeagueTable(prevTable => prevTable.map(entry => {
+      if (entry.teamId === selectedTeam.id) {
+        return {
+          ...entry,
+          played: entry.played + 1,
+          wins: entry.wins + (userScore > opponentScore ? 1 : 0),
+          draws: entry.draws + (userScore === opponentScore ? 1 : 0),
+          losses: entry.losses + (userScore < opponentScore ? 1 : 0),
+          goalsFor: entry.goalsFor + userScore,
+          goalsAgainst: entry.goalsAgainst + opponentScore,
+          goalDifference: entry.goalDifference + (userScore - opponentScore),
+          points: entry.points + (userScore > opponentScore ? 3 : userScore === opponentScore ? 1 : 0),
+        };
+      }
+      if (entry.teamId === opponentTeam.id) {
+        return {
+          ...entry,
+          played: entry.played + 1,
+          wins: entry.wins + (opponentScore > userScore ? 1 : 0),
+          draws: entry.draws + (opponentScore === userScore ? 1 : 0),
+          losses: entry.losses + (opponentScore < userScore ? 1 : 0),
+          goalsFor: entry.goalsFor + opponentScore,
+          goalsAgainst: entry.goalsAgainst + userScore,
+          goalDifference: entry.goalDifference + (opponentScore - userScore),
+          points: entry.points + (opponentScore > userScore ? 3 : opponentScore === userScore ? 1 : 0),
+        };
+      }
+      return entry;
+    }));
+
     setNewsArticles(prev => [newArticle, ...prev]);
     setMatchDay(prev => prev + 1);
     setActiveScreen('Jogar');
@@ -143,6 +193,8 @@ const App: React.FC = () => {
       setActiveScreen('Atualizações');
     } else if (title === 'Notícias') {
       setActiveScreen('Notícias');
+    } else if (title === 'Tabela') {
+      setActiveScreen('Tabela');
     } else {
       alert(`${title} clicado!`);
     }
@@ -158,6 +210,8 @@ const App: React.FC = () => {
         return <UpdatesScreen onBack={() => setActiveScreen('Início')} />;
       case 'Notícias':
         return <NewsScreen articles={newsArticles} onBack={() => setActiveScreen('Início')} />;
+      case 'Tabela':
+        return <TableScreen table={leagueTable} onBack={() => setActiveScreen('Início')} />;
       case 'Jogar':
         return <GameMenuScreen onStartMatch={() => setActiveScreen('AssistindoPartida')} />;
       case 'AssistindoPartida':

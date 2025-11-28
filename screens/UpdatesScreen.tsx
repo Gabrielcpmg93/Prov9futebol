@@ -8,6 +8,15 @@ interface UpdatesScreenProps {
 const UpdatesScreen: React.FC<UpdatesScreenProps> = ({ onBack }) => {
   const updates = [
     {
+      version: 'v1.3.0',
+      date: '28 de Julho, 2024',
+      changes: [
+        'Adicionada a Tabela do Brasileirão com sistema de pontos.',
+        'Sistema de Notícias Pós-Partida: Um jornal é gerado após cada jogo.',
+        'Seção de Notícias agora exibe o histórico de partidas.',
+      ],
+    },
+    {
       version: 'v1.2.0',
       date: '24 de Julho, 2024',
       changes: [
