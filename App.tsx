@@ -29,6 +29,7 @@ const App: React.FC = () => {
   const [newsArticles, setNewsArticles] = useState<NewsArticle[]>([]);
   const [matchDay, setMatchDay] = useState(1);
   const [leagueTable, setLeagueTable] = useState<TableEntry[]>([]);
+  const [friendlyMatchScheduled, setFriendlyMatchScheduled] = useState(false);
 
   useEffect(() => {
     if (selectedTeam) {
@@ -181,6 +182,9 @@ const App: React.FC = () => {
         };
       }
       return entry;
+    }).sort((a, b) => {
+      if (b.points !== a.points) return b.points - a.points;
+      return b.goalDifference - a.goalDifference;
     }));
 
     setNewsArticles(prev => [newArticle, ...prev]);
@@ -200,6 +204,16 @@ const App: React.FC = () => {
     }
   };
 
+  const handleMainActionClick = (title: string) => {
+    if (title === 'Calendário') {
+      setFriendlyMatchScheduled(true);
+      alert('Amistoso agendado! Vá para o menu "Jogar" para disputar a partida.');
+    } else {
+      alert(`${title} clicado!`);
+    }
+  };
+
+
   if (!selectedTeam) {
     return <TeamSelectionScreen teams={teams} onSelectTeam={setSelectedTeam} />;
   }
@@ -211,9 +225,13 @@ const App: React.FC = () => {
       case 'Notícias':
         return <NewsScreen articles={newsArticles} onBack={() => setActiveScreen('Início')} />;
       case 'Tabela':
-        return <TableScreen table={leagueTable} onBack={() => setActiveScreen('Início')} />;
+        return <TableScreen table={leagueTable} onBack={() => setActiveScreen('Início')} userTeamId={selectedTeam.id} />;
       case 'Jogar':
-        return <GameMenuScreen onStartMatch={() => setActiveScreen('AssistindoPartida')} />;
+        return <GameMenuScreen 
+                  onStartMatch={() => setActiveScreen('AssistindoPartida')}
+                  isFriendlyMatchAvailable={friendlyMatchScheduled}
+                  onStartFriendlyMatch={() => setActiveScreen('AssistindoAmistoso')}
+               />;
       case 'AssistindoPartida':
         return <GameScreen 
                   userTeam={selectedTeam} 
@@ -221,6 +239,17 @@ const App: React.FC = () => {
                   onBack={() => setActiveScreen('Jogar')}
                   matchDay={matchDay}
                   onMatchEnd={handleMatchEnd}
+                  isFriendly={false}
+               />;
+      case 'AssistindoAmistoso':
+         return <GameScreen 
+                  userTeam={selectedTeam} 
+                  opponentTeam={teams.find(t => t.id !== selectedTeam.id)!} 
+                  onBack={() => {
+                    setActiveScreen('Jogar');
+                    setFriendlyMatchScheduled(false); // Reset after playing
+                  }}
+                  isFriendly={true}
                />;
       case 'Início':
       default:
@@ -231,7 +260,7 @@ const App: React.FC = () => {
                 <ActionListItem
                   key={index}
                   {...action}
-                  onClick={() => alert(`${action.title} clicado!`)}
+                  onClick={() => handleMainActionClick(action.title)}
                 />
               ))}
             </div>

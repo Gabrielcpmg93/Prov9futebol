@@ -53,3 +53,24 @@ export interface TableEntry {
   goalDifference: number;
   points: number;
 }
+
+export interface GameScreenProps {
+  userTeam: Team;
+  opponentTeam: Team;
+  onBack: () => void;
+  isFriendly?: boolean;
+  matchDay?: number;
+  onMatchEnd?: (userScore: number, opponentScore: number) => void;
+}
+
+export interface TableScreenProps {
+  table: TableEntry[];
+  onBack: () => void;
+  userTeamId: string;
+}
+
+export interface GameMenuScreenProps {
+  onStartMatch: () => void;
+  isFriendlyMatchAvailable: boolean;
+  onStartFriendlyMatch: () => void;
+}

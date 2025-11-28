@@ -1,13 +1,8 @@
 
 import React from 'react';
-import type { TableEntry } from '../types';
+import type { TableScreenProps } from '../types';
 
-interface TableScreenProps {
-  table: TableEntry[];
-  onBack: () => void;
-}
-
-const TableScreen: React.FC<TableScreenProps> = ({ table, onBack }) => {
+const TableScreen: React.FC<TableScreenProps> = ({ table, onBack, userTeamId }) => {
   const sortedTable = [...table].sort((a, b) => {
     if (b.points !== a.points) {
       return b.points - a.points;
@@ -41,9 +36,9 @@ const TableScreen: React.FC<TableScreenProps> = ({ table, onBack }) => {
           </thead>
           <tbody>
             {sortedTable.map((entry, index) => (
-              <tr key={entry.teamId} className="bg-white border-b hover:bg-gray-50">
+              <tr key={entry.teamId} className={`border-b hover:bg-gray-50 ${entry.teamId === userTeamId ? 'bg-green-50' : 'bg-white'}`}>
                 <td className="px-2 py-3 font-medium text-gray-900 text-center">{index + 1}</td>
-                <td className="px-4 py-3 font-semibold text-gray-800">{entry.teamName}</td>
+                <td className={`px-4 py-3 font-semibold ${entry.teamId === userTeamId ? 'text-green-800' : 'text-gray-800'}`}>{entry.teamName}</td>
                 <td className="px-2 py-3 font-bold text-gray-900 text-center">{entry.points}</td>
                 <td className="px-2 py-3 text-center">{entry.played}</td>
                 <td className="px-2 py-3 text-center">{entry.wins}</td>
