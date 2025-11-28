@@ -7,6 +7,7 @@ import TeamSelectionScreen from './screens/TeamSelectionScreen';
 import UpdatesScreen from './screens/UpdatesScreen';
 import GameScreen from './screens/GameScreen';
 import GameMenuScreen from './screens/GameMenuScreen';
+import NewsScreen from './screens/NewsScreen';
 import {
   CalendarIcon,
   SirenIcon,
@@ -18,12 +19,14 @@ import {
   NewspaperIcon,
   BellIcon,
 } from './components/icons';
-import type { ActionListItemData, QuickActionCardData, Team } from './types';
+import type { ActionListItemData, QuickActionCardData, Team, NewsArticle } from './types';
 import { teams } from './data/teams';
 
 const App: React.FC = () => {
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
   const [activeScreen, setActiveScreen] = useState('Início');
+  const [newsArticles, setNewsArticles] = useState<NewsArticle[]>([]);
+  const [matchDay, setMatchDay] = useState(1);
 
   const mainActions: Omit<ActionListItemData, 'onClick'>[] = [
     {
@@ -105,9 +108,41 @@ const App: React.FC = () => {
     },
   ];
   
+  const handleMatchEnd = (userScore: number, opponentScore: number) => {
+    if (!selectedTeam) return;
+
+    const opponentTeam = teams.find(t => t.id !== selectedTeam.id)!;
+    const userTeamName = selectedTeam.name;
+    const opponentTeamName = opponentTeam.name;
+    
+    let headline = '';
+    if (userScore > opponentScore) {
+      headline = `${userTeamName} vence ${opponentTeamName} em jogo emocionante!`;
+    } else if (opponentScore > userScore) {
+      headline = `${userTeamName} é derrotado por ${opponentTeamName}.`;
+    } else {
+      headline = `Empate! ${userTeamName} e ${opponentTeamName} terminam com o placar igual.`;
+    }
+
+    const newArticle: NewsArticle = {
+      matchDay,
+      headline,
+      userTeamName,
+      opponentTeamName,
+      userScore,
+      opponentScore,
+    };
+
+    setNewsArticles(prev => [newArticle, ...prev]);
+    setMatchDay(prev => prev + 1);
+    setActiveScreen('Jogar');
+  };
+
   const handleQuickActionClick = (title: string) => {
     if (title === 'Atualizações') {
       setActiveScreen('Atualizações');
+    } else if (title === 'Notícias') {
+      setActiveScreen('Notícias');
     } else {
       alert(`${title} clicado!`);
     }
@@ -121,13 +156,17 @@ const App: React.FC = () => {
     switch (activeScreen) {
       case 'Atualizações':
         return <UpdatesScreen onBack={() => setActiveScreen('Início')} />;
+      case 'Notícias':
+        return <NewsScreen articles={newsArticles} onBack={() => setActiveScreen('Início')} />;
       case 'Jogar':
         return <GameMenuScreen onStartMatch={() => setActiveScreen('AssistindoPartida')} />;
       case 'AssistindoPartida':
         return <GameScreen 
                   userTeam={selectedTeam} 
                   opponentTeam={teams.find(t => t.id !== selectedTeam.id)!} 
-                  onBack={() => setActiveScreen('Jogar')} 
+                  onBack={() => setActiveScreen('Jogar')}
+                  matchDay={matchDay}
+                  onMatchEnd={handleMatchEnd}
                />;
       case 'Início':
       default:

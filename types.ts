@@ -31,3 +31,12 @@ export interface Team {
   name: string;
   logo: string; 
 }
+
+export interface NewsArticle {
+  matchDay: number;
+  headline: string;
+  userTeamName: string;
+  opponentTeamName: string;
+  userScore: number;
+  opponentScore: number;
+}

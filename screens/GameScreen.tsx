@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import type { Team } from '../types';
 
@@ -5,12 +6,15 @@ interface GameScreenProps {
   userTeam: Team;
   opponentTeam: Team;
   onBack: () => void;
+  matchDay: number;
+  onMatchEnd: (userScore: number, opponentScore: number) => void;
 }
 
-const GameScreen: React.FC<GameScreenProps> = ({ userTeam, opponentTeam, onBack }) => {
+const GameScreen: React.FC<GameScreenProps> = ({ userTeam, opponentTeam, onBack, matchDay, onMatchEnd }) => {
   const [userScore, setUserScore] = useState(0);
   const [opponentScore, setOpponentScore] = useState(0);
   const [gameTime, setGameTime] = useState(0);
+  const [gameEnded, setGameEnded] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -19,32 +23,50 @@ const GameScreen: React.FC<GameScreenProps> = ({ userTeam, opponentTeam, onBack 
           clearInterval(timer);
           return 90;
         }
+        // Goal simulation
+        if (Math.random() < 0.03) {
+          if (Math.random() < 0.6) { // 60% chance for user's team
+            setUserScore(s => s + 1);
+          } else {
+            setOpponentScore(s => s + 1);
+          }
+        }
         return prevTime + 1;
       });
-    }, 500); // Game time flows faster than real time
+    }, 200); // Faster game time for demonstration
 
     return () => clearInterval(timer);
   }, []);
 
+  useEffect(() => {
+    if (gameTime >= 90 && !gameEnded) {
+      setGameEnded(true);
+      // Wait a moment for the user to see the final score
+      setTimeout(() => {
+        onMatchEnd(userScore, opponentScore);
+      }, 2000);
+    }
+  }, [gameTime, userScore, opponentScore, onMatchEnd, gameEnded]);
+
   const displayHalf = gameTime <= 45 ? '1º' : '2º';
-  const displayMinutes = gameTime <= 45 ? gameTime : gameTime - 45;
+  const displayMinutes = gameTime <= 45 ? gameTime : Math.min(gameTime - 45, 45);
 
   return (
     <div className="p-4 flex flex-col h-full bg-green-800 text-white">
       <header className="text-center mb-4 relative">
-        <button onClick={onBack} className="absolute left-0 top-1/2 -translate-y-1/2 text-white hover:text-gray-200">
+        <button onClick={onBack} className="absolute left-0 top-1/2 -translate-y-1/2 text-white hover:text-gray-200" disabled={gameEnded}>
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <p className="font-bold">Brasileirão Série A - Partida 1 de 38</p>
+        <p className="font-bold">Brasileirão Série A - Partida {matchDay} de 38</p>
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-x-4 font-bold my-2">
             <span className="text-xl text-right truncate">{userTeam.name}</span>
             <div className="text-4xl">{userScore} - {opponentScore}</div>
             <span className="text-xl text-left truncate">{opponentTeam.name}</span>
         </div>
         <div className="text-2xl font-mono bg-black bg-opacity-30 px-3 py-1 rounded-md inline-block">
-            {displayHalf} Tempo: {displayMinutes}'
+          {gameTime < 90 ? `${displayHalf} Tempo: ${displayMinutes}'` : 'Fim de Jogo'}
         </div>
       </header>
       <main className="flex-grow flex items-center justify-center">
