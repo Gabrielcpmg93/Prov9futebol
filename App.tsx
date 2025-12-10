@@ -12,10 +12,7 @@ import TableScreen from './screens/TableScreen';
 import CalendarScreen from './screens/CalendarScreen';
 import {
   CalendarIcon,
-  SirenIcon,
-  SproutIcon,
   MicIcon,
-  MapIcon,
   GraduationCapIcon,
   ListIcon,
   NewspaperIcon,
@@ -60,22 +57,6 @@ const App: React.FC = () => {
       action: { type: 'badge', value: '+1' },
     },
     {
-      icon: <SirenIcon />,
-      bgColor: 'bg-blue-100',
-      iconColor: 'text-blue-600',
-      title: 'Modo Polícia',
-      subtitle: 'Patrulhe as ruas e multe infratores',
-      action: { type: 'arrow' },
-    },
-    {
-      icon: <SproutIcon />,
-      bgColor: 'bg-yellow-100',
-      iconColor: 'text-yellow-600',
-      title: 'Fazenda',
-      subtitle: 'Plante, colha e venda frutas',
-      action: { type: 'arrow' },
-    },
-    {
       icon: <MicIcon />,
       bgColor: 'bg-red-100',
       iconColor: 'text-red-500',
@@ -89,14 +70,6 @@ const App: React.FC = () => {
       iconColor: 'text-purple-500',
       title: 'Calendário',
       subtitle: 'Agendar amistosos e ver datas',
-      action: { type: 'arrow' },
-    },
-    {
-      icon: <MapIcon />,
-      bgColor: 'bg-sky-100',
-      iconColor: 'text-sky-500',
-      title: 'Prefeito',
-      subtitle: 'Construa ruas, casas e comércios',
       action: { type: 'arrow' },
     },
     {
