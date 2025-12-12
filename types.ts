@@ -32,6 +32,15 @@ export interface Team {
   logo: string; 
 }
 
+export interface Player {
+  id: string;
+  name: string;
+  age: number;
+  position: 'GOL' | 'DEF' | 'MEI' | 'ATA';
+  skill: number;
+  value: number;
+}
+
 export interface NewsArticle {
   matchDay: number;
   headline: string;
@@ -78,4 +87,11 @@ export interface GameMenuScreenProps {
 export interface CalendarScreenProps {
   onBack: () => void;
   onSchedule: () => void;
+}
+
+export interface MarketScreenProps {
+  players: Player[];
+  onBack: () => void;
+  onUpdate: () => void;
+  onHire: (player: Player) => void;
 }

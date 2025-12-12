@@ -10,6 +10,7 @@ import GameMenuScreen from './screens/GameMenuScreen';
 import NewsScreen from './screens/NewsScreen';
 import TableScreen from './screens/TableScreen';
 import CalendarScreen from './screens/CalendarScreen';
+import MarketScreen from './screens/MarketScreen';
 import {
   CalendarIcon,
   MicIcon,
@@ -18,8 +19,9 @@ import {
   NewspaperIcon,
   BellIcon,
 } from './components/icons';
-import type { ActionListItemData, QuickActionCardData, Team, NewsArticle, TableEntry } from './types';
+import type { ActionListItemData, QuickActionCardData, Team, NewsArticle, TableEntry, Player } from './types';
 import { teams } from './data/teams';
+import { getMarketPlayers } from './data/players';
 
 const App: React.FC = () => {
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
@@ -28,6 +30,7 @@ const App: React.FC = () => {
   const [matchDay, setMatchDay] = useState(1);
   const [leagueTable, setLeagueTable] = useState<TableEntry[]>([]);
   const [friendlyMatchScheduled, setFriendlyMatchScheduled] = useState(false);
+  const [marketPlayers, setMarketPlayers] = useState<Player[]>([]);
 
   useEffect(() => {
     if (selectedTeam) {
@@ -44,6 +47,7 @@ const App: React.FC = () => {
         points: 0,
       }));
       setLeagueTable(initialTable);
+      setMarketPlayers(getMarketPlayers());
     }
   }, [selectedTeam]);
 
@@ -192,6 +196,16 @@ const App: React.FC = () => {
     alert('Amistoso agendado! Vá para o menu "Jogar" para disputar a partida.');
   };
 
+  const handleUpdateMarket = () => {
+    setMarketPlayers(getMarketPlayers());
+  };
+
+  const handleHirePlayer = (player: Player) => {
+    alert(`Contratando ${player.name} por ${player.value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}!`);
+    // In a real app, you'd add the player to the team and remove from market
+    setMarketPlayers(prev => prev.filter(p => p.id !== player.id));
+  };
+
 
   if (!selectedTeam) {
     return <TeamSelectionScreen teams={teams} onSelectTeam={setSelectedTeam} />;
@@ -207,6 +221,13 @@ const App: React.FC = () => {
         return <TableScreen table={leagueTable} onBack={() => setActiveScreen('Início')} userTeamId={selectedTeam.id} />;
       case 'Calendário':
         return <CalendarScreen onBack={() => setActiveScreen('Início')} onSchedule={handleScheduleFriendlyMatch} />;
+      case 'Mercado':
+        return <MarketScreen 
+                  players={marketPlayers}
+                  onBack={() => setActiveScreen('Início')}
+                  onUpdate={handleUpdateMarket}
+                  onHire={handleHirePlayer}
+               />;
       case 'Jogar':
         return <GameMenuScreen 
                   onStartMatch={() => setActiveScreen('AssistindoPartida')}

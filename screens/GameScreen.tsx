@@ -42,11 +42,8 @@ const GameScreen: React.FC<GameScreenProps> = ({ userTeam, opponentTeam, onBack,
     }
   }, [gameTime, userScore, opponentScore, onMatchEnd, gameEnded, isFriendly]);
 
-  const displayHalf = gameTime <= 45 ? '1º' : '2º';
-  const displayMinutes = gameTime <= 45 ? gameTime : Math.min(gameTime - 45, 45);
-
   return (
-    <div className="p-4 flex flex-col h-full bg-green-800 text-white">
+    <div className="p-4 flex flex-col h-full bg-green-900 text-white">
       <header className="text-center mb-4 relative">
         <button onClick={onBack} className="absolute left-0 top-1/2 -translate-y-1/2 text-white hover:text-gray-200" disabled={gameEnded && !isFriendly}>
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -62,31 +59,58 @@ const GameScreen: React.FC<GameScreenProps> = ({ userTeam, opponentTeam, onBack,
             <span className="text-xl text-left truncate">{opponentTeam.name}</span>
         </div>
         <div className="text-2xl font-mono bg-black bg-opacity-30 px-3 py-1 rounded-md inline-block">
-          {gameTime < 90 ? `${displayHalf} Tempo: ${displayMinutes}'` : 'Fim de Jogo'}
+          {gameTime < 90 ? `${gameTime}'` : 'Fim de Jogo'}
         </div>
       </header>
       <main className="flex-grow flex items-center justify-center">
-        <div className="w-2/3 aspect-[2/3] bg-green-600 border-2 border-white border-opacity-50 relative">
-          {/* Field Markings */}
-          <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-white bg-opacity-50 -translate-y-1/2"></div>
-          <div className="absolute top-1/2 left-1/2 w-20 h-20 border border-white border-opacity-50 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
-          <div className="absolute top-1/2 left-1/2 w-1.5 h-1.5 bg-white rounded-full -translate-x-1/2 -translate-y-1/2"></div>
-          
-           {/* Penalty Areas */}
-          <div className="absolute top-8 bottom-8 left-0 w-20 border-r border-t border-b border-white border-opacity-50 rounded-r-lg"></div>
-          <div className="absolute top-8 bottom-8 right-0 w-20 border-l border-t border-b border-white border-opacity-50 rounded-l-lg"></div>
+        <div className="w-full max-w-sm aspect-[3/4] p-2 bg-gradient-to-b from-green-700 to-green-800 rounded-lg shadow-inner">
+            <div className="relative w-full h-full bg-green-600">
+                <svg width="100%" height="100%" viewBox="0 0 300 400" className="absolute top-0 left-0">
+                    <defs>
+                        <radialGradient id="grass" cx="50%" cy="50%" r="70%" fx="50%" fy="50%">
+                            <stop offset="0%" style={{ stopColor: 'rgba(255,255,255,0.1)', stopOpacity: 1 }} />
+                            <stop offset="100%" style={{ stopColor: 'rgba(255,255,255,0)', stopOpacity: 1 }} />
+                        </radialGradient>
+                    </defs>
+                    <rect width="300" height="400" fill="url(#grass)" />
 
-           {/* Goal Areas */}
-          <div className="absolute top-16 bottom-16 left-0 w-8 border-r border-t border-b border-white border-opacity-50 rounded-r-md"></div>
-          <div className="absolute top-16 bottom-16 right-0 w-8 border-l border-t border-b border-white border-opacity-50 rounded-l-md"></div>
+                    {/* Outlines */}
+                    <rect x="10" y="10" width="280" height="380" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2" />
 
-          {/* Penalty Spots */}
-          <div className="absolute top-1/2 -translate-y-1/2 left-12 w-1 h-1 bg-white rounded-full"></div>
-          <div className="absolute top-1/2 -translate-y-1/2 right-12 w-1 h-1 bg-white rounded-full"></div>
+                    {/* Mid line */}
+                    <line x1="10" y1="200" x2="290" y2="200" stroke="rgba(255,255,255,0.7)" strokeWidth="2" />
+                    
+                    {/* Mid circle */}
+                    <circle cx="150" cy="200" r="40" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2" />
+                    <circle cx="150" cy="200" r="2" fill="rgba(255,255,255,0.7)" />
 
-           {/* Goals */}
-           <div className="absolute left-[-2px] top-1/2 -translate-y-1/2 w-1 h-16 bg-gray-200 border border-gray-400"></div>
-           <div className="absolute right-[-2px] top-1/2 -translate-y-1/2 w-1 h-16 bg-gray-200 border border-gray-400"></div>
+                    {/* Penalty areas */}
+                    <rect x="10" y="125" width="80" height="150" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2" />
+                    <rect x="210" y="125" width="80" height="150" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2" />
+                    
+                    {/* Goal areas */}
+                    <rect x="10" y="160" width="30" height="80" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2" />
+                    <rect x="260" y="160" width="30" height="80" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2" />
+
+                    {/* Penalty spots */}
+                    <circle cx="60" cy="200" r="2" fill="rgba(255,255,255,0.7)" />
+                    <circle cx="240" cy="200" r="2" fill="rgba(255,255,255,0.7)" />
+
+                    {/* Penalty arcs */}
+                    <path d="M 90 160 A 40 40 0 0 1 90 240" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2" />
+                    <path d="M 210 160 A 40 40 0 0 0 210 240" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2" />
+
+                    {/* Corner arcs */}
+                    <path d="M 10 30 A 20 20 0 0 1 30 10" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2" />
+                    <path d="M 270 10 A 20 20 0 0 1 290 30" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2" />
+                    <path d="M 10 370 A 20 20 0 0 0 30 390" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2" />
+                    <path d="M 270 390 A 20 20 0 0 0 290 370" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2" />
+
+                    {/* Goals */}
+                    <rect x="2" y="175" width="8" height="50" fill="none" stroke="white" strokeWidth="2"/>
+                    <rect x="290" y="175" width="8" height="50" fill="none" stroke="white" strokeWidth="2"/>
+                </svg>
+            </div>
         </div>
       </main>
     </div>
