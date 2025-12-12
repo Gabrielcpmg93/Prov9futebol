@@ -39,6 +39,7 @@ const App: React.FC = () => {
   const [marketPlayers, setMarketPlayers] = useState<Player[]>([]);
   const [lastMatchContext, setLastMatchContext] = useState<LastMatchContext | null>(null);
   const [squad, setSquad] = useState<Player[]>([]);
+  const [leagueMatchCycleIndex, setLeagueMatchCycleIndex] = useState(0);
   
   // Career Mode State
   const [careerPlayer, setCareerPlayer] = useState<CareerPlayer | null>(null);
@@ -127,14 +128,32 @@ const App: React.FC = () => {
     },
   ];
   
-  const handleMatchEnd = (userScore: number, opponentScore: number) => {
+  const handleMatchEnd = () => {
     if (!selectedTeam) return;
+
+    const isFriendly = activeScreen === 'AssistindoAmistoso';
+
+    let userScore, opponentScore;
+
+    if (isFriendly) {
+      // Friendly matches have random results
+      userScore = Math.floor(Math.random() * 4);
+      opponentScore = Math.floor(Math.random() * 4);
+    } else {
+      // League matches follow the cycle: Win, Win, Lose
+      const outcome = leagueMatchCycleIndex;
+      if (outcome < 2) { // Win
+        userScore = Math.floor(Math.random() * 2) + 2; // 2 or 3
+        opponentScore = Math.floor(Math.random() * 2); // 0 or 1
+      } else { // Loss
+        userScore = Math.floor(Math.random() * 2); // 0 or 1
+        opponentScore = Math.floor(Math.random() * 2) + 2; // 2 or 3
+      }
+    }
 
     const opponentTeam = teams.find(t => t.id !== selectedTeam.id)!;
     const userTeamName = selectedTeam.name;
     const opponentTeamName = opponentTeam.name;
-    
-    const isFriendly = activeScreen === 'AssistindoAmistoso';
 
     let headline = '';
     if (userScore > opponentScore) {
@@ -189,6 +208,7 @@ const App: React.FC = () => {
         }));
         
         setMatchDay(prev => prev + 1);
+        setLeagueMatchCycleIndex(prev => (prev + 1) % 3);
     }
 
     setNewsArticles(prev => [newArticle, ...prev]);
@@ -278,26 +298,32 @@ const App: React.FC = () => {
       setActiveScreen('CareerGame');
   };
 
-  const handleCareerMatchEnd = (userScore: number, opponentScore: number) => {
-      // Simulate player stats based on result (simple random logic)
-      if (careerPlayer) {
-          let newGoals = careerPlayer.goals;
-          let newAssists = careerPlayer.assists;
+  const handleCareerMatchEnd = () => {
+      if (!careerPlayer) return;
 
-          // If user team scored, chance for player to participate
-          for (let i = 0; i < userScore; i++) {
-              const dice = Math.random();
-              if (dice > 0.6) newGoals++;
-              else if (dice > 0.4) newAssists++;
-          }
+      // Career matches follow the cycle: Win, Win, Lose
+      const outcome = careerPlayer.matchesPlayed % 3;
+      let userScore, opponentScore;
 
-          setCareerPlayer({
-              ...careerPlayer,
-              goals: newGoals,
-              assists: newAssists,
-              matchesPlayed: careerPlayer.matchesPlayed + 1
-          });
+      if (outcome < 2) { // Win
+          userScore = Math.floor(Math.random() * 2) + 2; // 2 or 3
+          opponentScore = Math.floor(Math.random() * 2); // 0 or 1
+      } else { // Loss
+          userScore = Math.floor(Math.random() * 2); // 0 or 1
+          opponentScore = Math.floor(Math.random() * 2) + 2; // 2 or 3
       }
+      
+      // Player always gets 2 goals and 1 assist
+      const newGoals = careerPlayer.goals + 2;
+      const newAssists = careerPlayer.assists + 1;
+
+      setCareerPlayer({
+          ...careerPlayer,
+          goals: newGoals,
+          assists: newAssists,
+          matchesPlayed: careerPlayer.matchesPlayed + 1
+      });
+      
       setActiveScreen('CareerMenu');
   };
 
@@ -345,9 +371,9 @@ const App: React.FC = () => {
           return <GameScreen 
                     userTeam={{id: 'amateur', name: 'Time da Peneira', logo: ''}}
                     opponentTeam={{id: 'amateur_opp', name: 'Adversário', logo: ''}}
-                    onBack={() => setActiveScreen('Início')} // Should probably disable back here
+                    onBack={() => setActiveScreen('Início')}
                     onMatchEnd={handleCareerAmateurMatchEnd}
-                    isFriendly={true} // Reusing friendly logic for simplicity (no table update)
+                    isFriendly={true}
                  />;
       case 'CareerOffers':
           return <CareerOfferScreen offers={getCareerOffers()} onSelectTeam={handleSelectCareerTeam} />;

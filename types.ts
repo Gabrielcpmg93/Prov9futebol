@@ -82,7 +82,7 @@ export interface GameScreenProps {
   onBack: () => void;
   isFriendly?: boolean;
   matchDay?: number;
-  onMatchEnd?: (userScore: number, opponentScore: number) => void;
+  onMatchEnd?: () => void;
   isCareerMode?: boolean; // New flag for visual indication
 }
 

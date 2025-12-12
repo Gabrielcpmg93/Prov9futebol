@@ -68,7 +68,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ userTeam, opponentTeam, onBack,
           clearInterval(timer);
           return 90;
         }
-        if (!isFriendly && Math.random() < 0.03) {
+        if (Math.random() < 0.03) {
           if (Math.random() < 0.6) {
             setUserScore(s => s + 1);
           } else {
@@ -87,11 +87,11 @@ const GameScreen: React.FC<GameScreenProps> = ({ userTeam, opponentTeam, onBack,
       setGameEnded(true);
       if (onMatchEnd) {
         setTimeout(() => {
-          onMatchEnd(userScore, opponentScore);
+          onMatchEnd();
         }, 2000);
       }
     }
-  }, [gameTime, userScore, opponentScore, onMatchEnd, gameEnded]);
+  }, [gameTime, onMatchEnd, gameEnded]);
 
   // Animation loop for players and ball
   useEffect(() => {
