@@ -8,6 +8,15 @@ interface UpdatesScreenProps {
 const UpdatesScreen: React.FC<UpdatesScreenProps> = ({ onBack }) => {
   const updates = [
     {
+      version: 'v1.5.0',
+      date: '30 de Julho, 2024',
+      changes: [
+        'Novo Modo: Rumo ao Estrelato! Crie seu jogador, jogue a peneira e assine com clubes.',
+        'Sistema de Carreira: Jogue uma temporada de 89 jogos e acompanhe suas estatísticas (Gols e Assistências).',
+        'Novo menu exclusivo para o gerenciamento da carreira do seu jogador.',
+      ],
+    },
+    {
       version: 'v1.4.0',
       date: '29 de Julho, 2024',
       changes: [

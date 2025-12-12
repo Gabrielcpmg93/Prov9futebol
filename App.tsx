@@ -13,6 +13,9 @@ import CalendarScreen from './screens/CalendarScreen';
 import MarketScreen from './screens/MarketScreen';
 import PressConferenceScreen from './screens/PressConferenceScreen';
 import SquadScreen from './screens/SquadScreen';
+import CareerCreationScreen from './screens/CareerCreationScreen';
+import CareerOfferScreen from './screens/CareerOfferScreen';
+import CareerMenuScreen from './screens/CareerMenuScreen';
 import {
   CalendarIcon,
   MicIcon,
@@ -20,8 +23,9 @@ import {
   ListIcon,
   NewspaperIcon,
   BellIcon,
+  StarIcon,
 } from './components/icons';
-import type { ActionListItemData, QuickActionCardData, Team, NewsArticle, TableEntry, Player, LastMatchContext } from './types';
+import type { ActionListItemData, QuickActionCardData, Team, NewsArticle, TableEntry, Player, LastMatchContext, CareerPlayer } from './types';
 import { teams } from './data/teams';
 import { getMarketPlayers, getInitialSquad } from './data/players';
 
@@ -35,6 +39,9 @@ const App: React.FC = () => {
   const [marketPlayers, setMarketPlayers] = useState<Player[]>([]);
   const [lastMatchContext, setLastMatchContext] = useState<LastMatchContext | null>(null);
   const [squad, setSquad] = useState<Player[]>([]);
+  
+  // Career Mode State
+  const [careerPlayer, setCareerPlayer] = useState<CareerPlayer | null>(null);
 
   useEffect(() => {
     if (selectedTeam) {
@@ -57,6 +64,14 @@ const App: React.FC = () => {
   }, [selectedTeam]);
 
   const mainActions: Omit<ActionListItemData, 'onClick'>[] = [
+    {
+      icon: <StarIcon />,
+      bgColor: 'bg-yellow-100',
+      iconColor: 'text-yellow-600',
+      title: 'Rumo ao Estrelato',
+      subtitle: 'Crie seu jogador e viva o sonho',
+      action: { type: 'arrow' },
+    },
     {
       icon: <CalendarIcon />,
       bgColor: 'bg-indigo-100',
@@ -206,6 +221,12 @@ const App: React.FC = () => {
     } else if (title === 'Imprensa') {
       setLastMatchContext(null); 
       setActiveScreen('Coletiva');
+    } else if (title === 'Rumo ao Estrelato') {
+        if (careerPlayer) {
+             setActiveScreen('CareerMenu');
+        } else {
+             setActiveScreen('CareerCreation');
+        }
     } else {
       alert(`${title} clicado!`);
     }
@@ -227,10 +248,70 @@ const App: React.FC = () => {
     setMarketPlayers(prevMarket => prevMarket.filter(p => p.id !== player.id));
   };
 
+  // Career Mode Handlers
+  const handleCreateCareerPlayer = (name: string, position: CareerPlayer['position']) => {
+    setCareerPlayer({
+        name,
+        position,
+        teamId: null,
+        teamName: null,
+        goals: 0,
+        assists: 0,
+        matchesPlayed: 0,
+        totalSeasonMatches: 89
+    });
+    // Start Amateur Match
+    setActiveScreen('CareerAmateurGame');
+  };
+
+  const handleCareerAmateurMatchEnd = () => {
+    // Navigate to offers
+    setActiveScreen('CareerOffers');
+  };
+
+  const handleSelectCareerTeam = (team: Team) => {
+      setCareerPlayer(prev => prev ? ({...prev, teamId: team.id, teamName: team.name}) : null);
+      setActiveScreen('CareerMenu');
+  };
+
+  const handlePlayCareerMatch = () => {
+      setActiveScreen('CareerGame');
+  };
+
+  const handleCareerMatchEnd = (userScore: number, opponentScore: number) => {
+      // Simulate player stats based on result (simple random logic)
+      if (careerPlayer) {
+          let newGoals = careerPlayer.goals;
+          let newAssists = careerPlayer.assists;
+
+          // If user team scored, chance for player to participate
+          for (let i = 0; i < userScore; i++) {
+              const dice = Math.random();
+              if (dice > 0.6) newGoals++;
+              else if (dice > 0.4) newAssists++;
+          }
+
+          setCareerPlayer({
+              ...careerPlayer,
+              goals: newGoals,
+              assists: newAssists,
+              matchesPlayed: careerPlayer.matchesPlayed + 1
+          });
+      }
+      setActiveScreen('CareerMenu');
+  };
+
 
   if (!selectedTeam) {
     return <TeamSelectionScreen teams={teams} onSelectTeam={setSelectedTeam} />;
   }
+
+  // Helper to generate random offers
+  const getCareerOffers = () => {
+      const raposa = teams.find(t => t.id === 'cru') || teams[0];
+      const otherTeams = teams.filter(t => t.id !== 'cru').sort(() => 0.5 - Math.random()).slice(0, 2);
+      return [raposa, ...otherTeams];
+  };
 
   const renderContent = () => {
     switch (activeScreen) {
@@ -256,6 +337,40 @@ const App: React.FC = () => {
                   onBack={() => setActiveScreen('Jogar')} 
                   lastMatch={lastMatchContext}
                />;
+      
+      // Career Mode Screens
+      case 'CareerCreation':
+          return <CareerCreationScreen onBack={() => setActiveScreen('Início')} onCreate={handleCreateCareerPlayer} />;
+      case 'CareerAmateurGame':
+          return <GameScreen 
+                    userTeam={{id: 'amateur', name: 'Time da Peneira', logo: ''}}
+                    opponentTeam={{id: 'amateur_opp', name: 'Adversário', logo: ''}}
+                    onBack={() => setActiveScreen('Início')} // Should probably disable back here
+                    onMatchEnd={handleCareerAmateurMatchEnd}
+                    isFriendly={true} // Reusing friendly logic for simplicity (no table update)
+                 />;
+      case 'CareerOffers':
+          return <CareerOfferScreen offers={getCareerOffers()} onSelectTeam={handleSelectCareerTeam} />;
+      case 'CareerMenu':
+          return careerPlayer ? (
+            <CareerMenuScreen 
+                player={careerPlayer} 
+                onPlayMatch={handlePlayCareerMatch} 
+                onExit={() => setActiveScreen('Início')} 
+            />
+          ) : <div>Erro ao carregar carreira</div>;
+      case 'CareerGame':
+          const currentCareerTeam = teams.find(t => t.id === careerPlayer?.teamId) || teams[0];
+          const randomOpponent = teams.filter(t => t.id !== currentCareerTeam.id)[Math.floor(Math.random() * (teams.length - 1))];
+          return <GameScreen 
+                    userTeam={currentCareerTeam}
+                    opponentTeam={randomOpponent}
+                    onBack={() => setActiveScreen('CareerMenu')}
+                    onMatchEnd={handleCareerMatchEnd}
+                    isFriendly={true} // Using friendly to not affect main league table
+                    isCareerMode={true}
+                 />;
+
       case 'Jogar':
         return <GameMenuScreen 
                   onStartMatch={() => setActiveScreen('AssistindoPartida')}

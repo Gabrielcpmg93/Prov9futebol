@@ -43,6 +43,17 @@ export interface Player {
   contractWeeks?: number;
 }
 
+export interface CareerPlayer {
+  name: string;
+  position: 'GOL' | 'DEF' | 'MEI' | 'ATA';
+  teamId: string | null;
+  teamName: string | null;
+  goals: number;
+  assists: number;
+  matchesPlayed: number;
+  totalSeasonMatches: number; // 89
+}
+
 export interface NewsArticle {
   matchDay: number;
   headline: string;
@@ -72,6 +83,7 @@ export interface GameScreenProps {
   isFriendly?: boolean;
   matchDay?: number;
   onMatchEnd?: (userScore: number, opponentScore: number) => void;
+  isCareerMode?: boolean; // New flag for visual indication
 }
 
 export interface TableScreenProps {
@@ -113,4 +125,20 @@ export interface PressConferenceScreenProps {
 export interface SquadScreenProps {
   squad: Player[];
   onBack: () => void;
+}
+
+export interface CareerCreationScreenProps {
+  onBack: () => void;
+  onCreate: (name: string, position: CareerPlayer['position']) => void;
+}
+
+export interface CareerOfferScreenProps {
+  offers: Team[];
+  onSelectTeam: (team: Team) => void;
+}
+
+export interface CareerMenuScreenProps {
+  player: CareerPlayer;
+  onPlayMatch: () => void;
+  onExit: () => void;
 }
