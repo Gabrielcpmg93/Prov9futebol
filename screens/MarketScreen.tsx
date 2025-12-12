@@ -1,6 +1,7 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import type { Player, MarketScreenProps } from '../types';
+import ContractModal from '../components/ContractModal';
 
 const positionColors = {
   GOL: 'bg-yellow-500',
@@ -9,7 +10,7 @@ const positionColors = {
   ATA: 'bg-red-500',
 };
 
-const PlayerCard: React.FC<{ player: Player; onHire: (player: Player) => void; }> = ({ player, onHire }) => {
+const PlayerCard: React.FC<{ player: Player; onHireClick: (player: Player) => void; }> = ({ player, onHireClick }) => {
   const formatValue = (value: number) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
   }
@@ -25,7 +26,7 @@ const PlayerCard: React.FC<{ player: Player; onHire: (player: Player) => void; }
         <p className="text-sm font-semibold text-green-700">Passe: {formatValue(player.value)}</p>
       </div>
       <button 
-        onClick={() => onHire(player)}
+        onClick={() => onHireClick(player)}
         className="bg-green-500 text-white font-semibold py-2 px-3 rounded-lg text-sm hover:bg-green-600 transition-colors"
       >
         Contratar
@@ -35,32 +36,60 @@ const PlayerCard: React.FC<{ player: Player; onHire: (player: Player) => void; }
 }
 
 const MarketScreen: React.FC<MarketScreenProps> = ({ players, onBack, onUpdate, onHire }) => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
+
+  const handleHireClick = (player: Player) => {
+    setSelectedPlayer(player);
+    setIsModalOpen(true);
+  };
+
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+    setSelectedPlayer(null);
+  };
+
+  const handleConfirmHire = (player: Player, salary: number, contractWeeks: number) => {
+    onHire(player, salary, contractWeeks);
+    handleModalClose();
+  };
+
   return (
-    <div className="p-4 h-full flex flex-col">
-      <header className="flex items-center mb-6 relative">
-        <button onClick={onBack} className="absolute left-0 text-gray-600 hover:text-gray-800">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
-        <h1 className="text-xl font-bold text-gray-800 text-center flex-grow">Mercado de Transferências</h1>
-      </header>
-      
-      <div className="mb-4">
-        <button
-          onClick={onUpdate}
-          className="w-full bg-sky-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-sky-600 transition-colors shadow"
-        >
-          Atualizar Lista de Jogadores
-        </button>
+    <>
+      <div className="p-4 h-full flex flex-col">
+        <header className="flex items-center mb-6 relative">
+          <button onClick={onBack} className="absolute left-0 text-gray-600 hover:text-gray-800">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <h1 className="text-xl font-bold text-gray-800 text-center flex-grow">Mercado de Transferências</h1>
+        </header>
+        
+        <div className="mb-4">
+          <button
+            onClick={onUpdate}
+            className="w-full bg-sky-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-sky-600 transition-colors shadow"
+          >
+            Atualizar Lista de Jogadores
+          </button>
+        </div>
+
+        <main className="flex-grow overflow-y-auto space-y-3">
+          {players.map(player => (
+            <PlayerCard key={player.id} player={player} onHireClick={handleHireClick} />
+          ))}
+        </main>
       </div>
 
-      <main className="flex-grow overflow-y-auto space-y-3">
-        {players.map(player => (
-          <PlayerCard key={player.id} player={player} onHire={onHire} />
-        ))}
-      </main>
-    </div>
+      {isModalOpen && selectedPlayer && (
+        <ContractModal 
+          player={selectedPlayer}
+          onClose={handleModalClose}
+          onConfirm={handleConfirmHire}
+        />
+      )}
+    </>
   );
 };
 

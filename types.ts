@@ -39,6 +39,8 @@ export interface Player {
   position: 'GOL' | 'DEF' | 'MEI' | 'ATA';
   skill: number;
   value: number;
+  salary?: number;
+  contractWeeks?: number;
 }
 
 export interface NewsArticle {
@@ -93,7 +95,7 @@ export interface MarketScreenProps {
   players: Player[];
   onBack: () => void;
   onUpdate: () => void;
-  onHire: (player: Player) => void;
+  onHire: (player: Player, salary: number, contractWeeks: number) => void;
 }
 
 export interface LastMatchContext {
@@ -106,4 +108,9 @@ export interface LastMatchContext {
 export interface PressConferenceScreenProps {
   onBack: () => void;
   lastMatch?: LastMatchContext | null;
+}
+
+export interface SquadScreenProps {
+  squad: Player[];
+  onBack: () => void;
 }

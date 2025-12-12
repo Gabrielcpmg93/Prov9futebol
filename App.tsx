@@ -12,6 +12,7 @@ import TableScreen from './screens/TableScreen';
 import CalendarScreen from './screens/CalendarScreen';
 import MarketScreen from './screens/MarketScreen';
 import PressConferenceScreen from './screens/PressConferenceScreen';
+import SquadScreen from './screens/SquadScreen';
 import {
   CalendarIcon,
   MicIcon,
@@ -22,7 +23,7 @@ import {
 } from './components/icons';
 import type { ActionListItemData, QuickActionCardData, Team, NewsArticle, TableEntry, Player, LastMatchContext } from './types';
 import { teams } from './data/teams';
-import { getMarketPlayers } from './data/players';
+import { getMarketPlayers, getInitialSquad } from './data/players';
 
 const App: React.FC = () => {
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
@@ -33,6 +34,7 @@ const App: React.FC = () => {
   const [friendlyMatchScheduled, setFriendlyMatchScheduled] = useState(false);
   const [marketPlayers, setMarketPlayers] = useState<Player[]>([]);
   const [lastMatchContext, setLastMatchContext] = useState<LastMatchContext | null>(null);
+  const [squad, setSquad] = useState<Player[]>([]);
 
   useEffect(() => {
     if (selectedTeam) {
@@ -50,6 +52,7 @@ const App: React.FC = () => {
       }));
       setLeagueTable(initialTable);
       setMarketPlayers(getMarketPlayers());
+      setSquad(getInitialSquad());
     }
   }, [selectedTeam]);
 
@@ -116,8 +119,6 @@ const App: React.FC = () => {
     const userTeamName = selectedTeam.name;
     const opponentTeamName = opponentTeam.name;
     
-    // Determine friendly vs league context based on active screen (roughly) or state
-    // For simplicity, we assume if we are in 'AssistindoPartida' it is league, 'AssistindoAmistoso' is friendly
     const isFriendly = activeScreen === 'AssistindoAmistoso';
 
     let headline = '';
@@ -177,7 +178,6 @@ const App: React.FC = () => {
 
     setNewsArticles(prev => [newArticle, ...prev]);
     
-    // Save context for press conference
     setLastMatchContext({
         userScore,
         opponentScore,
@@ -185,7 +185,6 @@ const App: React.FC = () => {
         isFriendly
     });
 
-    // Navigate to Press Conference instead of just 'Jogar'
     setActiveScreen('Coletiva');
   };
 
@@ -205,7 +204,6 @@ const App: React.FC = () => {
     if (title === 'Calendário') {
       setActiveScreen('Calendário');
     } else if (title === 'Imprensa') {
-      // Clear last match context for generic interview
       setLastMatchContext(null); 
       setActiveScreen('Coletiva');
     } else {
@@ -223,10 +221,10 @@ const App: React.FC = () => {
     setMarketPlayers(getMarketPlayers());
   };
 
-  const handleHirePlayer = (player: Player) => {
-    alert(`Contratando ${player.name} por ${player.value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}!`);
-    // In a real app, you'd add the player to the team and remove from market
-    setMarketPlayers(prev => prev.filter(p => p.id !== player.id));
+  const handleHirePlayer = (player: Player, salary: number, contractWeeks: number) => {
+    const newPlayer = { ...player, salary, contractWeeks };
+    setSquad(prevSquad => [...prevSquad, newPlayer].sort((a, b) => (b.skill || 0) - (a.skill || 0)));
+    setMarketPlayers(prevMarket => prevMarket.filter(p => p.id !== player.id));
   };
 
 
@@ -244,6 +242,8 @@ const App: React.FC = () => {
         return <TableScreen table={leagueTable} onBack={() => setActiveScreen('Início')} userTeamId={selectedTeam.id} />;
       case 'Calendário':
         return <CalendarScreen onBack={() => setActiveScreen('Início')} onSchedule={handleScheduleFriendlyMatch} />;
+      case 'Elenco':
+        return <SquadScreen squad={squad} onBack={() => setActiveScreen('Início')} />;
       case 'Mercado':
         return <MarketScreen 
                   players={marketPlayers}
