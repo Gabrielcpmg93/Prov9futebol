@@ -11,6 +11,7 @@ import NewsScreen from './screens/NewsScreen';
 import TableScreen from './screens/TableScreen';
 import CalendarScreen from './screens/CalendarScreen';
 import MarketScreen from './screens/MarketScreen';
+import PressConferenceScreen from './screens/PressConferenceScreen';
 import {
   CalendarIcon,
   MicIcon,
@@ -19,7 +20,7 @@ import {
   NewspaperIcon,
   BellIcon,
 } from './components/icons';
-import type { ActionListItemData, QuickActionCardData, Team, NewsArticle, TableEntry, Player } from './types';
+import type { ActionListItemData, QuickActionCardData, Team, NewsArticle, TableEntry, Player, LastMatchContext } from './types';
 import { teams } from './data/teams';
 import { getMarketPlayers } from './data/players';
 
@@ -31,6 +32,7 @@ const App: React.FC = () => {
   const [leagueTable, setLeagueTable] = useState<TableEntry[]>([]);
   const [friendlyMatchScheduled, setFriendlyMatchScheduled] = useState(false);
   const [marketPlayers, setMarketPlayers] = useState<Player[]>([]);
+  const [lastMatchContext, setLastMatchContext] = useState<LastMatchContext | null>(null);
 
   useEffect(() => {
     if (selectedTeam) {
@@ -114,6 +116,10 @@ const App: React.FC = () => {
     const userTeamName = selectedTeam.name;
     const opponentTeamName = opponentTeam.name;
     
+    // Determine friendly vs league context based on active screen (roughly) or state
+    // For simplicity, we assume if we are in 'AssistindoPartida' it is league, 'AssistindoAmistoso' is friendly
+    const isFriendly = activeScreen === 'AssistindoAmistoso';
+
     let headline = '';
     if (userScore > opponentScore) {
       headline = `${userTeamName} vence ${opponentTeamName} em jogo emocionante!`;
@@ -132,42 +138,55 @@ const App: React.FC = () => {
       opponentScore,
     };
 
-    setLeagueTable(prevTable => prevTable.map(entry => {
-      if (entry.teamId === selectedTeam.id) {
-        return {
-          ...entry,
-          played: entry.played + 1,
-          wins: entry.wins + (userScore > opponentScore ? 1 : 0),
-          draws: entry.draws + (userScore === opponentScore ? 1 : 0),
-          losses: entry.losses + (userScore < opponentScore ? 1 : 0),
-          goalsFor: entry.goalsFor + userScore,
-          goalsAgainst: entry.goalsAgainst + opponentScore,
-          goalDifference: entry.goalDifference + (userScore - opponentScore),
-          points: entry.points + (userScore > opponentScore ? 3 : userScore === opponentScore ? 1 : 0),
-        };
-      }
-      if (entry.teamId === opponentTeam.id) {
-        return {
-          ...entry,
-          played: entry.played + 1,
-          wins: entry.wins + (opponentScore > userScore ? 1 : 0),
-          draws: entry.draws + (opponentScore === userScore ? 1 : 0),
-          losses: entry.losses + (opponentScore < userScore ? 1 : 0),
-          goalsFor: entry.goalsFor + opponentScore,
-          goalsAgainst: entry.goalsAgainst + userScore,
-          goalDifference: entry.goalDifference + (opponentScore - userScore),
-          points: entry.points + (opponentScore > userScore ? 3 : opponentScore === userScore ? 1 : 0),
-        };
-      }
-      return entry;
-    }).sort((a, b) => {
-      if (b.points !== a.points) return b.points - a.points;
-      return b.goalDifference - a.goalDifference;
-    }));
+    if (!isFriendly) {
+        setLeagueTable(prevTable => prevTable.map(entry => {
+          if (entry.teamId === selectedTeam.id) {
+            return {
+              ...entry,
+              played: entry.played + 1,
+              wins: entry.wins + (userScore > opponentScore ? 1 : 0),
+              draws: entry.draws + (userScore === opponentScore ? 1 : 0),
+              losses: entry.losses + (userScore < opponentScore ? 1 : 0),
+              goalsFor: entry.goalsFor + userScore,
+              goalsAgainst: entry.goalsAgainst + opponentScore,
+              goalDifference: entry.goalDifference + (userScore - opponentScore),
+              points: entry.points + (userScore > opponentScore ? 3 : userScore === opponentScore ? 1 : 0),
+            };
+          }
+          if (entry.teamId === opponentTeam.id) {
+            return {
+              ...entry,
+              played: entry.played + 1,
+              wins: entry.wins + (opponentScore > userScore ? 1 : 0),
+              draws: entry.draws + (opponentScore === userScore ? 1 : 0),
+              losses: entry.losses + (opponentScore < userScore ? 1 : 0),
+              goalsFor: entry.goalsFor + opponentScore,
+              goalsAgainst: entry.goalsAgainst + userScore,
+              goalDifference: entry.goalDifference + (opponentScore - userScore),
+              points: entry.points + (opponentScore > userScore ? 3 : opponentScore === userScore ? 1 : 0),
+            };
+          }
+          return entry;
+        }).sort((a, b) => {
+          if (b.points !== a.points) return b.points - a.points;
+          return b.goalDifference - a.goalDifference;
+        }));
+        
+        setMatchDay(prev => prev + 1);
+    }
 
     setNewsArticles(prev => [newArticle, ...prev]);
-    setMatchDay(prev => prev + 1);
-    setActiveScreen('Jogar');
+    
+    // Save context for press conference
+    setLastMatchContext({
+        userScore,
+        opponentScore,
+        opponentName: opponentTeamName,
+        isFriendly
+    });
+
+    // Navigate to Press Conference instead of just 'Jogar'
+    setActiveScreen('Coletiva');
   };
 
   const handleQuickActionClick = (title: string) => {
@@ -185,6 +204,10 @@ const App: React.FC = () => {
   const handleMainActionClick = (title: string) => {
     if (title === 'Calendário') {
       setActiveScreen('Calendário');
+    } else if (title === 'Imprensa') {
+      // Clear last match context for generic interview
+      setLastMatchContext(null); 
+      setActiveScreen('Coletiva');
     } else {
       alert(`${title} clicado!`);
     }
@@ -228,6 +251,11 @@ const App: React.FC = () => {
                   onUpdate={handleUpdateMarket}
                   onHire={handleHirePlayer}
                />;
+      case 'Coletiva':
+        return <PressConferenceScreen 
+                  onBack={() => setActiveScreen('Jogar')} 
+                  lastMatch={lastMatchContext}
+               />;
       case 'Jogar':
         return <GameMenuScreen 
                   onStartMatch={() => setActiveScreen('AssistindoPartida')}
@@ -251,6 +279,7 @@ const App: React.FC = () => {
                     setActiveScreen('Jogar');
                     setFriendlyMatchScheduled(false); // Reset after playing
                   }}
+                  onMatchEnd={handleMatchEnd}
                   isFriendly={true}
                />;
       case 'Início':

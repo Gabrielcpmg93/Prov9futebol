@@ -95,3 +95,15 @@ export interface MarketScreenProps {
   onUpdate: () => void;
   onHire: (player: Player) => void;
 }
+
+export interface LastMatchContext {
+  userScore: number;
+  opponentScore: number;
+  opponentName: string;
+  isFriendly: boolean;
+}
+
+export interface PressConferenceScreenProps {
+  onBack: () => void;
+  lastMatch?: LastMatchContext | null;
+}
