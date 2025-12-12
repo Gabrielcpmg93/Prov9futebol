@@ -8,6 +8,16 @@ interface UpdatesScreenProps {
 const UpdatesScreen: React.FC<UpdatesScreenProps> = ({ onBack }) => {
   const updates = [
     {
+      version: 'v1.4.0',
+      date: '29 de Julho, 2024',
+      changes: [
+        'Nova Sala de Imprensa: Visual imersivo 3D com patrocinadores e mesa de entrevista, idêntico à foto real.',
+        'Sistema de Entrevistas: Responda perguntas dos repórteres após as partidas, com reações dinâmicas baseadas no resultado.',
+        'Mercado de Transferências: Nova aba "Mercado" para buscar e contratar jogadores gerados aleatoriamente.',
+        'Visual de Jogo Aprimorado: Novo campo vetorial detalhado e cronômetro realista de 90 minutos.',
+      ],
+    },
+    {
       version: 'v1.3.0',
       date: '28 de Julho, 2024',
       changes: [
