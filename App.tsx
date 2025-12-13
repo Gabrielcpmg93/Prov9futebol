@@ -13,6 +13,7 @@ import CalendarScreen from './screens/CalendarScreen';
 import MarketScreen from './screens/MarketScreen';
 import PressConferenceScreen from './screens/PressConferenceScreen';
 import SquadScreen from './screens/SquadScreen';
+import SocialScreen from './screens/SocialScreen';
 import CareerCreationScreen from './screens/CareerCreationScreen';
 import CareerOfferScreen from './screens/CareerOfferScreen';
 import CareerMenuScreen from './screens/CareerMenuScreen';
@@ -25,9 +26,10 @@ import {
   BellIcon,
   StarIcon,
 } from './components/icons';
-import type { ActionListItemData, QuickActionCardData, Team, NewsArticle, TableEntry, Player, LastMatchContext, CareerPlayer } from './types';
+import type { ActionListItemData, QuickActionCardData, Team, NewsArticle, TableEntry, Player, LastMatchContext, CareerPlayer, SocialPost, Consequence } from './types';
 import { teams } from './data/teams';
 import { getMarketPlayers, getInitialSquad } from './data/players';
+import { generateSocialFeed } from './data/social';
 
 const App: React.FC = () => {
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
@@ -40,6 +42,11 @@ const App: React.FC = () => {
   const [lastMatchContext, setLastMatchContext] = useState<LastMatchContext | null>(null);
   const [squad, setSquad] = useState<Player[]>([]);
   const [leagueMatchCycleIndex, setLeagueMatchCycleIndex] = useState(0);
+  
+  // Social & Team State
+  const [socialFeed, setSocialFeed] = useState<SocialPost[]>([]);
+  const [fanApproval, setFanApproval] = useState(70);
+  const [teamMorale, setTeamMorale] = useState(75);
   
   // Career Mode State
   const [careerPlayer, setCareerPlayer] = useState<CareerPlayer | null>(null);
@@ -61,6 +68,7 @@ const App: React.FC = () => {
       setLeagueTable(initialTable);
       setMarketPlayers(getMarketPlayers());
       setSquad(getInitialSquad());
+      setSocialFeed(generateSocialFeed(null, selectedTeam.name)); // Initial neutral feed
     }
   }, [selectedTeam]);
 
@@ -136,18 +144,16 @@ const App: React.FC = () => {
     let userScore, opponentScore;
 
     if (isFriendly) {
-      // Friendly matches have random results
       userScore = Math.floor(Math.random() * 4);
       opponentScore = Math.floor(Math.random() * 4);
     } else {
-      // League matches follow the cycle: Win, Win, Lose
       const outcome = leagueMatchCycleIndex;
       if (outcome < 2) { // Win
-        userScore = Math.floor(Math.random() * 2) + 2; // 2 or 3
-        opponentScore = Math.floor(Math.random() * 2); // 0 or 1
+        userScore = Math.floor(Math.random() * 2) + 2;
+        opponentScore = Math.floor(Math.random() * 2);
       } else { // Loss
-        userScore = Math.floor(Math.random() * 2); // 0 or 1
-        opponentScore = Math.floor(Math.random() * 2) + 2; // 2 or 3
+        userScore = Math.floor(Math.random() * 2);
+        opponentScore = Math.floor(Math.random() * 2) + 2;
       }
     }
 
@@ -156,47 +162,35 @@ const App: React.FC = () => {
     const opponentTeamName = opponentTeam.name;
 
     let headline = '';
+    let result: LastMatchContext['result'] = 'draw';
     if (userScore > opponentScore) {
       headline = `${userTeamName} vence ${opponentTeamName} em jogo emocionante!`;
+      result = 'win';
     } else if (opponentScore > userScore) {
       headline = `${userTeamName} é derrotado por ${opponentTeamName}.`;
+      result = 'loss';
     } else {
       headline = `Empate! ${userTeamName} e ${opponentTeamName} terminam com o placar igual.`;
     }
 
-    const newArticle: NewsArticle = {
-      matchDay,
-      headline,
-      userTeamName,
-      opponentTeamName,
-      userScore,
-      opponentScore,
-    };
+    const newArticle: NewsArticle = { matchDay, headline, userTeamName, opponentTeamName, userScore, opponentScore };
 
     if (!isFriendly) {
         setLeagueTable(prevTable => prevTable.map(entry => {
           if (entry.teamId === selectedTeam.id) {
             return {
-              ...entry,
-              played: entry.played + 1,
-              wins: entry.wins + (userScore > opponentScore ? 1 : 0),
-              draws: entry.draws + (userScore === opponentScore ? 1 : 0),
-              losses: entry.losses + (userScore < opponentScore ? 1 : 0),
-              goalsFor: entry.goalsFor + userScore,
-              goalsAgainst: entry.goalsAgainst + opponentScore,
+              ...entry, played: entry.played + 1, wins: entry.wins + (userScore > opponentScore ? 1 : 0),
+              draws: entry.draws + (userScore === opponentScore ? 1 : 0), losses: entry.losses + (userScore < opponentScore ? 1 : 0),
+              goalsFor: entry.goalsFor + userScore, goalsAgainst: entry.goalsAgainst + opponentScore,
               goalDifference: entry.goalDifference + (userScore - opponentScore),
               points: entry.points + (userScore > opponentScore ? 3 : userScore === opponentScore ? 1 : 0),
             };
           }
           if (entry.teamId === opponentTeam.id) {
             return {
-              ...entry,
-              played: entry.played + 1,
-              wins: entry.wins + (opponentScore > userScore ? 1 : 0),
-              draws: entry.draws + (opponentScore === userScore ? 1 : 0),
-              losses: entry.losses + (opponentScore < userScore ? 1 : 0),
-              goalsFor: entry.goalsFor + opponentScore,
-              goalsAgainst: entry.goalsAgainst + userScore,
+              ...entry, played: entry.played + 1, wins: entry.wins + (opponentScore > userScore ? 1 : 0),
+              draws: entry.draws + (opponentScore === userScore ? 1 : 0), losses: entry.losses + (opponentScore < userScore ? 1 : 0),
+              goalsFor: entry.goalsFor + opponentScore, goalsAgainst: entry.goalsAgainst + userScore,
               goalDifference: entry.goalDifference + (opponentScore - userScore),
               points: entry.points + (opponentScore > userScore ? 3 : opponentScore === userScore ? 1 : 0),
             };
@@ -210,46 +204,45 @@ const App: React.FC = () => {
         setMatchDay(prev => prev + 1);
         setLeagueMatchCycleIndex(prev => (prev + 1) % 3);
     }
-
-    setNewsArticles(prev => [newArticle, ...prev]);
     
-    setLastMatchContext({
-        userScore,
-        opponentScore,
-        opponentName: opponentTeamName,
-        isFriendly
-    });
-
+    const newMatchContext: LastMatchContext = { userScore, opponentScore, opponentName: opponentTeamName, isFriendly, result };
+    setNewsArticles(prev => [newArticle, ...prev]);
+    setLastMatchContext(newMatchContext);
+    setSocialFeed(generateSocialFeed(newMatchContext, selectedTeam.name));
     setActiveScreen('Coletiva');
   };
 
+  const handleSocialReply = (consequence: Consequence) => {
+      alert(`Feedback: ${consequence.feedback}`);
+      switch(consequence.type) {
+          case 'fan_approval':
+              setFanApproval(prev => Math.max(0, Math.min(100, prev + consequence.change)));
+              break;
+          case 'morale':
+              setTeamMorale(prev => Math.max(0, Math.min(100, prev + consequence.change)));
+              break;
+          case 'board_confidence':
+              // Placeholder for future implementation
+              break;
+      }
+  };
+
   const handleQuickActionClick = (title: string) => {
-    if (title === 'Atualizações') {
-      setActiveScreen('Atualizações');
-    } else if (title === 'Notícias') {
-      setActiveScreen('Notícias');
-    } else if (title === 'Tabela') {
-      setActiveScreen('Tabela');
-    } else {
-      alert(`${title} clicado!`);
-    }
+    if (title === 'Atualizações') setActiveScreen('Atualizações');
+    else if (title === 'Notícias') setActiveScreen('Notícias');
+    else if (title === 'Tabela') setActiveScreen('Tabela');
+    else alert(`${title} clicado!`);
   };
 
   const handleMainActionClick = (title: string) => {
-    if (title === 'Calendário') {
-      setActiveScreen('Calendário');
-    } else if (title === 'Imprensa') {
+    if (title === 'Calendário') setActiveScreen('Calendário');
+    else if (title === 'Imprensa') {
       setLastMatchContext(null); 
       setActiveScreen('Coletiva');
     } else if (title === 'Rumo ao Estrelato') {
-        if (careerPlayer) {
-             setActiveScreen('CareerMenu');
-        } else {
-             setActiveScreen('CareerCreation');
-        }
-    } else {
-      alert(`${title} clicado!`);
-    }
+      if (careerPlayer) setActiveScreen('CareerMenu');
+      else setActiveScreen('CareerCreation');
+    } else alert(`${title} clicado!`);
   };
 
   const handleScheduleFriendlyMatch = () => {
@@ -258,9 +251,7 @@ const App: React.FC = () => {
     alert('Amistoso agendado! Vá para o menu "Jogar" para disputar a partida.');
   };
 
-  const handleUpdateMarket = () => {
-    setMarketPlayers(getMarketPlayers());
-  };
+  const handleUpdateMarket = () => setMarketPlayers(getMarketPlayers());
 
   const handleHirePlayer = (player: Player, salary: number, contractWeeks: number) => {
     const newPlayer = { ...player, salary, contractWeeks };
@@ -268,183 +259,74 @@ const App: React.FC = () => {
     setMarketPlayers(prevMarket => prevMarket.filter(p => p.id !== player.id));
   };
 
-  // Career Mode Handlers
   const handleCreateCareerPlayer = (name: string, position: CareerPlayer['position']) => {
-    setCareerPlayer({
-        name,
-        position,
-        teamId: null,
-        teamName: null,
-        goals: 0,
-        assists: 0,
-        matchesPlayed: 0,
-        totalSeasonMatches: 89
-    });
-    // Start Amateur Match
+    setCareerPlayer({ name, position, teamId: null, teamName: null, goals: 0, assists: 0, matchesPlayed: 0, totalSeasonMatches: 89 });
     setActiveScreen('CareerAmateurGame');
   };
 
-  const handleCareerAmateurMatchEnd = () => {
-    // Navigate to offers
-    setActiveScreen('CareerOffers');
-  };
+  const handleCareerAmateurMatchEnd = () => setActiveScreen('CareerOffers');
 
   const handleSelectCareerTeam = (team: Team) => {
-      setCareerPlayer(prev => prev ? ({...prev, teamId: team.id, teamName: team.name}) : null);
-      setActiveScreen('CareerMenu');
+    setCareerPlayer(prev => prev ? ({...prev, teamId: team.id, teamName: team.name}) : null);
+    setActiveScreen('CareerMenu');
   };
 
-  const handlePlayCareerMatch = () => {
-      setActiveScreen('CareerGame');
-  };
+  const handlePlayCareerMatch = () => setActiveScreen('CareerGame');
 
   const handleCareerMatchEnd = () => {
-      if (!careerPlayer) return;
-
-      // Career matches follow the cycle: Win, Win, Lose
-      const outcome = careerPlayer.matchesPlayed % 3;
-      let userScore, opponentScore;
-
-      if (outcome < 2) { // Win
-          userScore = Math.floor(Math.random() * 2) + 2; // 2 or 3
-          opponentScore = Math.floor(Math.random() * 2); // 0 or 1
-      } else { // Loss
-          userScore = Math.floor(Math.random() * 2); // 0 or 1
-          opponentScore = Math.floor(Math.random() * 2) + 2; // 2 or 3
-      }
-      
-      // Player always gets 2 goals and 1 assist
-      const newGoals = careerPlayer.goals + 2;
-      const newAssists = careerPlayer.assists + 1;
-
-      setCareerPlayer({
-          ...careerPlayer,
-          goals: newGoals,
-          assists: newAssists,
-          matchesPlayed: careerPlayer.matchesPlayed + 1
-      });
-      
-      setActiveScreen('CareerMenu');
+    if (!careerPlayer) return;
+    setCareerPlayer({
+        ...careerPlayer,
+        goals: careerPlayer.goals + 2,
+        assists: careerPlayer.assists + 1,
+        matchesPlayed: careerPlayer.matchesPlayed + 1
+    });
+    setActiveScreen('CareerMenu');
   };
-
 
   if (!selectedTeam) {
     return <TeamSelectionScreen teams={teams} onSelectTeam={setSelectedTeam} />;
   }
 
-  // Helper to generate random offers
   const getCareerOffers = () => {
-      const raposa = teams.find(t => t.id === 'cru') || teams[0];
-      const otherTeams = teams.filter(t => t.id !== 'cru').sort(() => 0.5 - Math.random()).slice(0, 2);
-      return [raposa, ...otherTeams];
+    const raposa = teams.find(t => t.id === 'cru') || teams[0];
+    const otherTeams = teams.filter(t => t.id !== 'cru').sort(() => 0.5 - Math.random()).slice(0, 2);
+    return [raposa, ...otherTeams];
   };
 
   const renderContent = () => {
     switch (activeScreen) {
-      case 'Atualizações':
-        return <UpdatesScreen onBack={() => setActiveScreen('Início')} />;
-      case 'Notícias':
-        return <NewsScreen articles={newsArticles} onBack={() => setActiveScreen('Início')} />;
-      case 'Tabela':
-        return <TableScreen table={leagueTable} onBack={() => setActiveScreen('Início')} userTeamId={selectedTeam.id} />;
-      case 'Calendário':
-        return <CalendarScreen onBack={() => setActiveScreen('Início')} onSchedule={handleScheduleFriendlyMatch} />;
-      case 'Elenco':
-        return <SquadScreen squad={squad} onBack={() => setActiveScreen('Início')} />;
-      case 'Mercado':
-        return <MarketScreen 
-                  players={marketPlayers}
-                  onBack={() => setActiveScreen('Início')}
-                  onUpdate={handleUpdateMarket}
-                  onHire={handleHirePlayer}
-               />;
-      case 'Coletiva':
-        return <PressConferenceScreen 
-                  onBack={() => setActiveScreen('Jogar')} 
-                  lastMatch={lastMatchContext}
-               />;
+      case 'Atualizações': return <UpdatesScreen onBack={() => setActiveScreen('Início')} />;
+      case 'Notícias': return <NewsScreen articles={newsArticles} onBack={() => setActiveScreen('Início')} />;
+      case 'Tabela': return <TableScreen table={leagueTable} onBack={() => setActiveScreen('Início')} userTeamId={selectedTeam.id} />;
+      case 'Calendário': return <CalendarScreen onBack={() => setActiveScreen('Início')} onSchedule={handleScheduleFriendlyMatch} />;
+      case 'Elenco': return <SquadScreen squad={squad} onBack={() => setActiveScreen('Início')} />;
+      case 'Mercado': return <MarketScreen players={marketPlayers} onBack={() => setActiveScreen('Início')} onUpdate={handleUpdateMarket} onHire={handleHirePlayer} />;
+      case 'Coletiva': return <PressConferenceScreen onBack={() => setActiveScreen('Jogar')} lastMatch={lastMatchContext} />;
+      case 'Social': return <SocialScreen feed={socialFeed} onReply={handleSocialReply} />;
       
-      // Career Mode Screens
-      case 'CareerCreation':
-          return <CareerCreationScreen onBack={() => setActiveScreen('Início')} onCreate={handleCreateCareerPlayer} />;
-      case 'CareerAmateurGame':
-          return <GameScreen 
-                    userTeam={{id: 'amateur', name: 'Time da Peneira', logo: ''}}
-                    opponentTeam={{id: 'amateur_opp', name: 'Adversário', logo: ''}}
-                    onBack={() => setActiveScreen('Início')}
-                    onMatchEnd={handleCareerAmateurMatchEnd}
-                    isFriendly={true}
-                 />;
-      case 'CareerOffers':
-          return <CareerOfferScreen offers={getCareerOffers()} onSelectTeam={handleSelectCareerTeam} />;
-      case 'CareerMenu':
-          return careerPlayer ? (
-            <CareerMenuScreen 
-                player={careerPlayer} 
-                onPlayMatch={handlePlayCareerMatch} 
-                onExit={() => setActiveScreen('Início')} 
-            />
-          ) : <div>Erro ao carregar carreira</div>;
+      case 'CareerCreation': return <CareerCreationScreen onBack={() => setActiveScreen('Início')} onCreate={handleCreateCareerPlayer} />;
+      case 'CareerAmateurGame': return <GameScreen userTeam={{id: 'amateur', name: 'Time da Peneira', logo: ''}} opponentTeam={{id: 'amateur_opp', name: 'Adversário', logo: ''}} onBack={() => setActiveScreen('Início')} onMatchEnd={handleCareerAmateurMatchEnd} isFriendly={true} />;
+      case 'CareerOffers': return <CareerOfferScreen offers={getCareerOffers()} onSelectTeam={handleSelectCareerTeam} />;
+      case 'CareerMenu': return careerPlayer ? <CareerMenuScreen player={careerPlayer} onPlayMatch={handlePlayCareerMatch} onExit={() => setActiveScreen('Início')} /> : <div>Erro</div>;
       case 'CareerGame':
           const currentCareerTeam = teams.find(t => t.id === careerPlayer?.teamId) || teams[0];
           const randomOpponent = teams.filter(t => t.id !== currentCareerTeam.id)[Math.floor(Math.random() * (teams.length - 1))];
-          return <GameScreen 
-                    userTeam={currentCareerTeam}
-                    opponentTeam={randomOpponent}
-                    onBack={() => setActiveScreen('CareerMenu')}
-                    onMatchEnd={handleCareerMatchEnd}
-                    isFriendly={true} // Using friendly to not affect main league table
-                    isCareerMode={true}
-                 />;
-
-      case 'Jogar':
-        return <GameMenuScreen 
-                  onStartMatch={() => setActiveScreen('AssistindoPartida')}
-                  isFriendlyMatchAvailable={friendlyMatchScheduled}
-                  onStartFriendlyMatch={() => setActiveScreen('AssistindoAmistoso')}
-               />;
-      case 'AssistindoPartida':
-        return <GameScreen 
-                  userTeam={selectedTeam} 
-                  opponentTeam={teams.find(t => t.id !== selectedTeam.id)!} 
-                  onBack={() => setActiveScreen('Jogar')}
-                  matchDay={matchDay}
-                  onMatchEnd={handleMatchEnd}
-                  isFriendly={false}
-               />;
-      case 'AssistindoAmistoso':
-         return <GameScreen 
-                  userTeam={selectedTeam} 
-                  opponentTeam={teams.find(t => t.id !== selectedTeam.id)!} 
-                  onBack={() => {
-                    setActiveScreen('Jogar');
-                    setFriendlyMatchScheduled(false); // Reset after playing
-                  }}
-                  onMatchEnd={handleMatchEnd}
-                  isFriendly={true}
-               />;
+          return <GameScreen userTeam={currentCareerTeam} opponentTeam={randomOpponent} onBack={() => setActiveScreen('CareerMenu')} onMatchEnd={handleCareerMatchEnd} isFriendly={true} isCareerMode={true} />;
+      
+      case 'Jogar': return <GameMenuScreen onStartMatch={() => setActiveScreen('AssistindoPartida')} isFriendlyMatchAvailable={friendlyMatchScheduled} onStartFriendlyMatch={() => setActiveScreen('AssistindoAmistoso')} />;
+      case 'AssistindoPartida': return <GameScreen userTeam={selectedTeam} opponentTeam={teams.find(t => t.id !== selectedTeam.id)!} onBack={() => setActiveScreen('Jogar')} matchDay={matchDay} onMatchEnd={handleMatchEnd} isFriendly={false} />;
+      case 'AssistindoAmistoso': return <GameScreen userTeam={selectedTeam} opponentTeam={teams.find(t => t.id !== selectedTeam.id)!} onBack={() => { setActiveScreen('Jogar'); setFriendlyMatchScheduled(false); }} onMatchEnd={handleMatchEnd} isFriendly={true} />;
+      
       case 'Início':
       default:
         return (
            <div className="p-4">
             <div className="space-y-3">
-              {mainActions.map((action, index) => (
-                <ActionListItem
-                  key={index}
-                  {...action}
-                  onClick={() => handleMainActionClick(action.title)}
-                />
-              ))}
+              {mainActions.map((action, index) => (<ActionListItem key={index} {...action} onClick={() => handleMainActionClick(action.title)} />))}
             </div>
-
             <div className="grid grid-cols-3 gap-3 mt-4">
-              {quickActions.map((action, index) => (
-                <QuickActionCard
-                  key={index}
-                  {...action}
-                  onClick={() => handleQuickActionClick(action.title)}
-                />
-              ))}
+              {quickActions.map((action, index) => (<QuickActionCard key={index} {...action} onClick={() => handleQuickActionClick(action.title)} />))}
             </div>
           </div>
         );
@@ -453,9 +335,7 @@ const App: React.FC = () => {
 
   return (
     <div className="flex flex-col h-screen max-w-md mx-auto bg-slate-50 font-sans">
-      <main className="flex-grow overflow-y-auto pb-24">
-       {renderContent()}
-      </main>
+      <main className="flex-grow overflow-y-auto pb-24">{renderContent()}</main>
       <BottomNavBar activeLabel={activeScreen} onNavigate={setActiveScreen} />
     </div>
   );

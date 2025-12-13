@@ -115,6 +115,7 @@ export interface LastMatchContext {
   opponentScore: number;
   opponentName: string;
   isFriendly: boolean;
+  result: 'win' | 'loss' | 'draw';
 }
 
 export interface PressConferenceScreenProps {
@@ -141,4 +142,39 @@ export interface CareerMenuScreenProps {
   player: CareerPlayer;
   onPlayMatch: () => void;
   onExit: () => void;
+}
+
+// --- Social Media Types ---
+export type SocialAuthorType = 'player' | 'press' | 'fan' | 'agent' | 'club';
+export type ReplyTone = 'aggressive' | 'diplomatic' | 'evasive' | 'motivational';
+export type ConsequenceType = 'morale' | 'fan_approval' | 'board_confidence';
+
+export interface Consequence {
+    type: ConsequenceType;
+    change: number; // e.g., +10, -5
+    feedback: string;
+}
+
+export interface ReplyOption {
+    text: string;
+    tone: ReplyTone;
+    consequence: Consequence;
+}
+
+export interface SocialPost {
+    id: string;
+    authorName: string;
+    authorHandle: string;
+    authorType: SocialAuthorType;
+    content: string;
+    timestamp: string;
+    likes: number;
+    reposts: number;
+    isInteractive: boolean;
+    replyOptions?: ReplyOption[];
+}
+
+export interface SocialScreenProps {
+    feed: SocialPost[];
+    onReply: (consequence: Consequence) => void;
 }
