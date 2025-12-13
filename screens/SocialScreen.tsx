@@ -2,8 +2,9 @@
 import React, { useState } from 'react';
 import type { SocialScreenProps } from '../types';
 import TwittaFeed from '../components/social/TwittaFeed';
+import FutGramFeed from '../components/social/FutGramFeed';
 
-const SocialScreen: React.FC<SocialScreenProps> = ({ feed, onReply }) => {
+const SocialScreen: React.FC<SocialScreenProps> = ({ feed, futGramFeed, onReply, onLike, onFutGramComment }) => {
   const [activeApp, setActiveApp] = useState('Twitta');
 
   const apps = [
@@ -17,7 +18,9 @@ const SocialScreen: React.FC<SocialScreenProps> = ({ feed, onReply }) => {
   const renderActiveApp = () => {
     switch (activeApp) {
       case 'Twitta':
-        return <TwittaFeed feed={feed} onReply={onReply} />;
+        return <TwittaFeed feed={feed} onReply={onReply} onLike={onLike} />;
+      case 'FutGram':
+        return <FutGramFeed feed={futGramFeed} onLike={onLike} onComment={onFutGramComment} />;
       default:
         return (
           <div className="flex-grow flex flex-col items-center justify-center text-center text-gray-500 p-8">
@@ -44,8 +47,8 @@ const SocialScreen: React.FC<SocialScreenProps> = ({ feed, onReply }) => {
                   : 'text-gray-500 border-transparent hover:bg-gray-100'
               }`}
             >
-              <span className="mr-2">{app.icon}</span>
-              {app.name}
+              <span className="mr-2 text-xl">{app.icon}</span>
+              {/* Hide text on very small screens if needed, but keeping for now */}
             </button>
           ))}
         </div>

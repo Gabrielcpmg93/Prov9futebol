@@ -1,10 +1,16 @@
 
 import React, { useState } from 'react';
-import type { SocialScreenProps, SocialPost, ReplyOption, Consequence } from '../../types';
+import type { SocialPost, ReplyOption } from '../../types';
 import TweetCard from './TweetCard';
 import ReplyModal from './ReplyModal';
 
-const TwittaFeed: React.FC<SocialScreenProps> = ({ feed, onReply }) => {
+interface TwittaFeedProps {
+    feed: SocialPost[];
+    onReply: (postId: string, option: ReplyOption) => void;
+    onLike: (app: 'Twitta', postId: string) => void;
+}
+
+const TwittaFeed: React.FC<TwittaFeedProps> = ({ feed, onReply, onLike }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedPost, setSelectedPost] = useState<SocialPost | null>(null);
 
@@ -18,8 +24,10 @@ const TwittaFeed: React.FC<SocialScreenProps> = ({ feed, onReply }) => {
         setSelectedPost(null);
     };
 
-    const handleConfirmReply = (consequence: Consequence) => {
-        onReply(consequence);
+    const handleConfirmReply = (option: ReplyOption) => {
+        if (selectedPost) {
+            onReply(selectedPost.id, option);
+        }
         handleCloseModal();
     };
 
@@ -34,9 +42,14 @@ const TwittaFeed: React.FC<SocialScreenProps> = ({ feed, onReply }) => {
 
     return (
         <>
-            <div className="bg-white">
+            <div className="bg-white min-h-full pb-4">
                 {feed.map(post => (
-                    <TweetCard key={post.id} post={post} onReplyClick={handleReplyClick} />
+                    <TweetCard 
+                        key={post.id} 
+                        post={post} 
+                        onReplyClick={handleReplyClick} 
+                        onLikeClick={() => onLike('Twitta', post.id)}
+                    />
                 ))}
             </div>
             {isModalOpen && selectedPost && (

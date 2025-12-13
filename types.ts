@@ -159,6 +159,7 @@ export interface ReplyOption {
     text: string;
     tone: ReplyTone;
     consequence: Consequence;
+    authorReply: string; // The text the author will reply with
 }
 
 export interface SocialPost {
@@ -169,12 +170,31 @@ export interface SocialPost {
     content: string;
     timestamp: string;
     likes: number;
+    isLiked: boolean; // New
     reposts: number;
     isInteractive: boolean;
     replyOptions?: ReplyOption[];
+    
+    // Conversation State
+    userComment?: string;
+    authorResponse?: string;
+}
+
+export interface FutGramPost {
+  id: string;
+  authorName: string;
+  imageUrl: string;
+  caption: string;
+  likes: number;
+  isLiked: boolean;
+  commentsCount: number;
+  userComment?: string;
 }
 
 export interface SocialScreenProps {
     feed: SocialPost[];
-    onReply: (consequence: Consequence) => void;
+    futGramFeed: FutGramPost[];
+    onReply: (postId: string, option: ReplyOption) => void;
+    onLike: (app: 'Twitta' | 'FutGram', postId: string) => void;
+    onFutGramComment: (postId: string, comment: string) => void;
 }

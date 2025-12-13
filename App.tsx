@@ -26,10 +26,10 @@ import {
   BellIcon,
   StarIcon,
 } from './components/icons';
-import type { ActionListItemData, QuickActionCardData, Team, NewsArticle, TableEntry, Player, LastMatchContext, CareerPlayer, SocialPost, Consequence } from './types';
+import type { ActionListItemData, QuickActionCardData, Team, NewsArticle, TableEntry, Player, LastMatchContext, CareerPlayer, SocialPost, FutGramPost, ReplyOption } from './types';
 import { teams } from './data/teams';
 import { getMarketPlayers, getInitialSquad } from './data/players';
-import { generateSocialFeed } from './data/social';
+import { generateSocialFeed, generateFutGramFeed } from './data/social';
 
 const App: React.FC = () => {
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
@@ -45,6 +45,7 @@ const App: React.FC = () => {
   
   // Social & Team State
   const [socialFeed, setSocialFeed] = useState<SocialPost[]>([]);
+  const [futGramFeed, setFutGramFeed] = useState<FutGramPost[]>([]);
   const [fanApproval, setFanApproval] = useState(70);
   const [teamMorale, setTeamMorale] = useState(75);
   
@@ -69,6 +70,7 @@ const App: React.FC = () => {
       setMarketPlayers(getMarketPlayers());
       setSquad(getInitialSquad());
       setSocialFeed(generateSocialFeed(null, selectedTeam.name)); // Initial neutral feed
+      setFutGramFeed(generateFutGramFeed());
     }
   }, [selectedTeam]);
 
@@ -209,23 +211,53 @@ const App: React.FC = () => {
     setNewsArticles(prev => [newArticle, ...prev]);
     setLastMatchContext(newMatchContext);
     setSocialFeed(generateSocialFeed(newMatchContext, selectedTeam.name));
+    setFutGramFeed(generateFutGramFeed()); // New photos after match
     setActiveScreen('Coletiva');
   };
 
-  const handleSocialReply = (consequence: Consequence) => {
-      alert(`Feedback: ${consequence.feedback}`);
-      switch(consequence.type) {
+  const handleSocialReply = (postId: string, option: ReplyOption) => {
+      // Apply consequence
+      switch(option.consequence.type) {
           case 'fan_approval':
-              setFanApproval(prev => Math.max(0, Math.min(100, prev + consequence.change)));
+              setFanApproval(prev => Math.max(0, Math.min(100, prev + option.consequence.change)));
               break;
           case 'morale':
-              setTeamMorale(prev => Math.max(0, Math.min(100, prev + consequence.change)));
-              break;
-          case 'board_confidence':
-              // Placeholder for future implementation
+              setTeamMorale(prev => Math.max(0, Math.min(100, prev + option.consequence.change)));
               break;
       }
+      
+      // Update Post with Comment and Reply
+      setSocialFeed(prev => prev.map(post => {
+          if (post.id === postId) {
+              return {
+                  ...post,
+                  userComment: option.text,
+                  authorResponse: option.authorReply,
+                  isInteractive: false // Disable further replying
+              }
+          }
+          return post;
+      }));
   };
+
+  const handleSocialLike = (app: 'Twitta' | 'FutGram', postId: string) => {
+      if (app === 'Twitta') {
+          setSocialFeed(prev => prev.map(post => 
+              post.id === postId ? { ...post, isLiked: !post.isLiked, likes: post.likes + (post.isLiked ? -1 : 1) } : post
+          ));
+      } else {
+          setFutGramFeed(prev => prev.map(post => 
+              post.id === postId ? { ...post, isLiked: !post.isLiked, likes: post.likes + (post.isLiked ? -1 : 1) } : post
+          ));
+      }
+  };
+
+  const handleFutGramComment = (postId: string, comment: string) => {
+       setFutGramFeed(prev => prev.map(post => 
+          post.id === postId ? { ...post, userComment: comment, commentsCount: post.commentsCount + 1 } : post
+      ));
+  };
+
 
   const handleQuickActionClick = (title: string) => {
     if (title === 'Atualizações') setActiveScreen('Atualizações');
@@ -303,7 +335,7 @@ const App: React.FC = () => {
       case 'Elenco': return <SquadScreen squad={squad} onBack={() => setActiveScreen('Início')} />;
       case 'Mercado': return <MarketScreen players={marketPlayers} onBack={() => setActiveScreen('Início')} onUpdate={handleUpdateMarket} onHire={handleHirePlayer} />;
       case 'Coletiva': return <PressConferenceScreen onBack={() => setActiveScreen('Jogar')} lastMatch={lastMatchContext} />;
-      case 'Social': return <SocialScreen feed={socialFeed} onReply={handleSocialReply} />;
+      case 'Social': return <SocialScreen feed={socialFeed} futGramFeed={futGramFeed} onReply={handleSocialReply} onLike={handleSocialLike} onFutGramComment={handleFutGramComment} />;
       
       case 'CareerCreation': return <CareerCreationScreen onBack={() => setActiveScreen('Início')} onCreate={handleCreateCareerPlayer} />;
       case 'CareerAmateurGame': return <GameScreen userTeam={{id: 'amateur', name: 'Time da Peneira', logo: ''}} opponentTeam={{id: 'amateur_opp', name: 'Adversário', logo: ''}} onBack={() => setActiveScreen('Início')} onMatchEnd={handleCareerAmateurMatchEnd} isFriendly={true} />;

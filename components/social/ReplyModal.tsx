@@ -1,11 +1,11 @@
 
 import React from 'react';
-import type { SocialPost, ReplyOption, Consequence } from '../../types';
+import type { SocialPost, ReplyOption } from '../../types';
 
 interface ReplyModalProps {
     post: SocialPost;
     onClose: () => void;
-    onConfirmReply: (consequence: Consequence) => void;
+    onConfirmReply: (option: ReplyOption) => void;
 }
 
 const toneStyles = {
@@ -42,7 +42,7 @@ const ReplyModal: React.FC<ReplyModalProps> = ({ post, onClose, onConfirmReply }
                     {post.replyOptions?.map((option, index) => (
                         <button
                             key={index}
-                            onClick={() => onConfirmReply(option.consequence)}
+                            onClick={() => onConfirmReply(option)}
                             className={`w-full text-left p-4 rounded-xl border-2 transition-all duration-200 active:scale-95 group ${toneStyles[option.tone]}`}
                         >
                             <span className="font-medium">{option.text}</span>
