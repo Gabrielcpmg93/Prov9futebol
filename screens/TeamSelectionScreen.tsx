@@ -1,3 +1,4 @@
+
 import React from 'react';
 import type { Team } from '../types';
 
@@ -16,7 +17,7 @@ const TeamSelectionScreen: React.FC<TeamSelectionScreenProps> = ({ teams, onSele
             <span className="font-semibold text-lg text-gray-700 flex-grow">{team.name}</span>
             <button
               onClick={() => onSelectTeam(team)}
-              className="bg-green-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-600 transition-colors"
+              className="bg-green-500 text-white font-semibold py-1 px-3 text-sm rounded-lg hover:bg-green-600 transition-colors"
             >
               Selecionar
             </button>
