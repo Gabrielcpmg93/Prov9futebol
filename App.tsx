@@ -416,20 +416,77 @@ const App: React.FC = () => {
       case 'Início':
       default:
         return (
-           <div className="p-4">
-             {/* Simple Budget Display */}
-             <div className="mb-4 px-2 flex justify-between items-center text-sm font-semibold text-gray-600">
-                 <span>Caixa do Clube:</span>
-                 <span className={budget < 0 ? 'text-red-500' : 'text-green-600'}>
-                     {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(budget)}
-                 </span>
+           <div className="p-4 relative min-h-full overflow-hidden">
+             
+             {/* Left Christmas Decor */}
+             <div className="absolute top-0 left-0 bottom-0 w-8 pointer-events-none z-0 flex flex-col items-center">
+                <div className="w-[1px] h-full bg-gray-300 absolute left-1/2 -translate-x-1/2 opacity-50"></div>
+                <div className="flex flex-col items-center gap-8 py-4 w-full">
+                    {/* Bauble Red */}
+                    <div className="relative z-10 animate-bounce" style={{ animationDuration: '3s' }}>
+                        <svg className="w-6 h-6 text-red-500 drop-shadow-sm" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2c.553 0 1 .448 1 1v1.1c3.71.69 6.6 3.8 6.95 7.6.04.41-.25.79-.65.85-.41.06-.8-.22-.85-.64-.29-3.23-2.83-5.86-6.05-6.19l-.4-.04V15a6 6 0 11-6 0V5.68l-.4.04c-3.22.33-5.76 2.96-6.05 6.19-.05.42-.44.7-.85.64-.4-.06-.69-.44-.65-.85.35-3.8 3.24-6.91 6.95-7.6V3c0-.552.447-1 1-1z" /></svg>
+                    </div>
+                    {/* Tree Green */}
+                    <div className="relative z-10 animate-pulse" style={{ animationDuration: '4s' }}>
+                        <svg className="w-6 h-6 text-green-600 drop-shadow-sm" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 12h3v8h6v-6h2v6h6v-8h3L12 2z" /></svg>
+                    </div>
+                     {/* Snowflake Blue */}
+                    <div className="relative z-10 animate-spin" style={{ animationDuration: '10s' }}>
+                        <svg className="w-5 h-5 text-sky-400 drop-shadow-sm" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 2v20M2 12h20M4.929 4.929l14.142 14.142M4.929 19.071L19.071 4.929" /></svg>
+                    </div>
+                     {/* Bauble Gold */}
+                    <div className="relative z-10 animate-bounce" style={{ animationDuration: '3.5s' }}>
+                        <svg className="w-5 h-5 text-yellow-500 drop-shadow-sm" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /></svg>
+                    </div>
+                     {/* Tree Green */}
+                    <div className="relative z-10 animate-pulse" style={{ animationDuration: '5s' }}>
+                        <svg className="w-6 h-6 text-green-700 drop-shadow-sm" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 12h3v8h6v-6h2v6h6v-8h3L12 2z" /></svg>
+                    </div>
+                </div>
              </div>
-            <div className="space-y-3">
-              {mainActions.map((action, index) => (<ActionListItem key={index} {...action} onClick={() => handleMainActionClick(action.title)} />))}
-            </div>
-            <div className="grid grid-cols-3 gap-3 mt-4">
-              {quickActions.map((action, index) => (<QuickActionCard key={index} {...action} onClick={() => handleQuickActionClick(action.title)} />))}
-            </div>
+
+             {/* Right Christmas Decor */}
+             <div className="absolute top-0 right-0 bottom-0 w-8 pointer-events-none z-0 flex flex-col items-center">
+                <div className="w-[1px] h-full bg-gray-300 absolute left-1/2 -translate-x-1/2 opacity-50"></div>
+                <div className="flex flex-col items-center gap-8 py-4 w-full">
+                    {/* Star Gold */}
+                    <div className="relative z-10 animate-spin" style={{ animationDuration: '8s' }}>
+                         <svg className="w-6 h-6 text-yellow-500 drop-shadow-sm" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
+                    </div>
+                     {/* Bauble Green */}
+                    <div className="relative z-10 animate-bounce" style={{ animationDuration: '3.2s' }}>
+                        <svg className="w-5 h-5 text-green-600 drop-shadow-sm" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /></svg>
+                    </div>
+                    {/* Snowflake Blue */}
+                    <div className="relative z-10 animate-spin" style={{ animationDuration: '12s' }}>
+                        <svg className="w-5 h-5 text-sky-400 drop-shadow-sm" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 2v20M2 12h20M4.929 4.929l14.142 14.142M4.929 19.071L19.071 4.929" /></svg>
+                    </div>
+                    {/* Bauble Red */}
+                     <div className="relative z-10 animate-bounce" style={{ animationDuration: '2.8s' }}>
+                        <svg className="w-6 h-6 text-red-500 drop-shadow-sm" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2c.553 0 1 .448 1 1v1.1c3.71.69 6.6 3.8 6.95 7.6.04.41-.25.79-.65.85-.41.06-.8-.22-.85-.64-.29-3.23-2.83-5.86-6.05-6.19l-.4-.04V15a6 6 0 11-6 0V5.68l-.4.04c-3.22.33-5.76 2.96-6.05 6.19-.05.42-.44.7-.85.64-.4-.06-.69-.44-.65-.85.35-3.8 3.24-6.91 6.95-7.6V3c0-.552.447-1 1-1z" /></svg>
+                    </div>
+                     {/* Tree Green */}
+                    <div className="relative z-10 animate-pulse" style={{ animationDuration: '4.5s' }}>
+                        <svg className="w-6 h-6 text-green-700 drop-shadow-sm" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 12h3v8h6v-6h2v6h6v-8h3L12 2z" /></svg>
+                    </div>
+                </div>
+             </div>
+
+             <div className="relative z-10 px-4">
+                 {/* Simple Budget Display */}
+                 <div className="mb-4 px-2 flex justify-between items-center text-sm font-semibold text-gray-600 bg-white/80 rounded-lg p-2 backdrop-blur-sm">
+                     <span>Caixa do Clube:</span>
+                     <span className={budget < 0 ? 'text-red-500' : 'text-green-600'}>
+                         {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(budget)}
+                     </span>
+                 </div>
+                <div className="space-y-3">
+                  {mainActions.map((action, index) => (<ActionListItem key={index} {...action} onClick={() => handleMainActionClick(action.title)} />))}
+                </div>
+                <div className="grid grid-cols-3 gap-3 mt-4">
+                  {quickActions.map((action, index) => (<QuickActionCard key={index} {...action} onClick={() => handleQuickActionClick(action.title)} />))}
+                </div>
+             </div>
           </div>
         );
     }
