@@ -31,7 +31,7 @@ import {
 } from './components/icons';
 import type { ActionListItemData, QuickActionCardData, Team, NewsArticle, TableEntry, Player, LastMatchContext, CareerPlayer, SocialPost, FutGramPost, ReplyOption, Trophy } from './types';
 import { teams } from './data/teams';
-import { getMarketPlayers, getInitialSquad, getYouthPlayers } from './data/players';
+import { getMarketPlayers, getInitialSquad, getYouthPlayers, generateRandomPlayer } from './data/players';
 import { generateSocialFeed, generateFutGramFeed } from './data/social';
 
 const App: React.FC = () => {
@@ -49,6 +49,9 @@ const App: React.FC = () => {
   const [budget, setBudget] = useState(10000000); // 10 Million initial budget
   const [trophies, setTrophies] = useState<Trophy[]>([]);
   
+  // Chest State
+  const [hasOpenedChest, setHasOpenedChest] = useState(false);
+
   // Audio Control State
   const [volume, setVolume] = useState(0.3);
   const [showVolumeControl, setShowVolumeControl] = useState(false);
@@ -356,6 +359,9 @@ const App: React.FC = () => {
       
       // Deduct from budget
       setBudget(prev => prev - totalSalary);
+      
+      // Reset Chest on skip week (optional, but makes sense to get new chest)
+      setHasOpenedChest(false);
 
       // Decrease contract weeks for all players
       setSquad(prevSquad => prevSquad.map(player => ({
@@ -364,7 +370,7 @@ const App: React.FC = () => {
       })));
 
       const formattedTotal = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalSalary);
-      alert(`Semana pulada!\n\nSalários pagos: ${formattedTotal}\nOs contratos dos jogadores foram reduzidos em 1 semana.`);
+      alert(`Semana pulada!\n\nSalários pagos: ${formattedTotal}\nOs contratos dos jogadores foram reduzidos em 1 semana.\n\nUm novo Baú Misterioso apareceu!`);
   };
 
   const handleMainActionClick = (title: string) => {
@@ -426,6 +432,28 @@ const App: React.FC = () => {
     setActiveScreen('CareerMenu');
   };
 
+  // Chest Logic
+  const handleOpenChest = () => {
+      if (hasOpenedChest) return;
+      
+      const isMoney = Math.random() > 0.5;
+      
+      if (isMoney) {
+          setBudget(prev => prev + 1000);
+          alert("🎉 BAÚ DA SORTE 🎉\n\nVocê encontrou R$ 1.000,00 no baú!\nO valor foi adicionado ao caixa do clube.");
+      } else {
+          // Generate a player with strict parameters: OVR 71
+          const basePlayer = generateRandomPlayer('reward', true);
+          basePlayer.skill = 71;
+          // The name is already fictional from generateRandomPlayer
+          
+          setSquad(prev => [...prev, basePlayer].sort((a,b) => b.skill - a.skill));
+          alert(`🎉 BAÚ DA SORTE 🎉\n\nVocê encontrou um jogador!\n\nNome: ${basePlayer.name}\nPosição: ${basePlayer.position}\nNível (OVR): 71\n\nEle foi adicionado ao seu elenco.`);
+      }
+      
+      setHasOpenedChest(true);
+  };
+
   if (!selectedTeam) {
     return <TeamSelectionScreen teams={teams} onSelectTeam={setSelectedTeam} />;
   }
@@ -467,6 +495,32 @@ const App: React.FC = () => {
         return (
            <div className="p-4 relative min-h-full overflow-hidden">
              
+             {/* Chest Feature - Passa na tela (Floating Animation) */}
+             {!hasOpenedChest && (
+                 <button 
+                    onClick={handleOpenChest}
+                    className="absolute top-28 right-4 z-40 animate-bounce cursor-pointer hover:scale-110 transition-transform duration-300 drop-shadow-lg"
+                    title="Abrir Baú Misterioso"
+                 >
+                     <div className="relative">
+                         {/* Golden Glow */}
+                         <div className="absolute inset-0 bg-yellow-400 rounded-full blur-xl opacity-50 animate-pulse"></div>
+                         {/* Chest SVG */}
+                         <svg width="60" height="60" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" className="relative z-10">
+                            <path fill="#FFD700" d="M480 192H32C14.33 192 0 206.33 0 224v240c0 17.67 14.33 32 32 32h448c17.67 0 32-14.33 32-32V224c0-17.67-14.33-32-32-32z"/>
+                            <path fill="#DAA520" d="M32 192h448v64H32z"/>
+                            <path fill="#F0E68C" d="M32 128h448c17.67 0 32 14.33 32 32v32H0v-32c0-17.67 14.33-32 32-32z"/>
+                            <path fill="#DAA520" d="M0 160h512v32H0z"/>
+                            <path fill="#8B4513" d="M224 224h64v64h-64z"/> 
+                            <path fill="#FFFF00" d="M256 160l-32 64h64z" className="animate-pulse"/>
+                         </svg>
+                         <div className="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full border border-white">
+                             CLIQUE!
+                         </div>
+                     </div>
+                 </button>
+             )}
+
              {/* Left Christmas Decor */}
              <div className="absolute top-0 left-0 bottom-0 w-8 pointer-events-none z-0 flex flex-col items-center">
                 <div className="w-[1px] h-full bg-gray-300 absolute left-1/2 -translate-x-1/2 opacity-50"></div>
