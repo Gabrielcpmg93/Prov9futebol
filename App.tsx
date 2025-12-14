@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ActionListItem from './components/ActionListItem';
 import QuickActionCard from './components/QuickActionCard';
 import BottomNavBar from './components/BottomNavBar';
@@ -57,6 +57,39 @@ const App: React.FC = () => {
   
   // Career Mode State
   const [careerPlayer, setCareerPlayer] = useState<CareerPlayer | null>(null);
+
+  // Audio Reference
+  const audioRef = useRef<HTMLAudioElement>(null);
+
+  // Background Music Logic
+  useEffect(() => {
+    const screensWithMusic = [
+        'Início', 
+        'Calendário', 
+        'Coletiva', 
+        'CategoriasBase', 
+        'Social', 
+        'Elenco', 
+        'Mercado'
+    ];
+
+    if (audioRef.current) {
+        if (screensWithMusic.includes(activeScreen)) {
+            // Play music
+            audioRef.current.volume = 0.3; // Low volume for background
+            const playPromise = audioRef.current.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(error => {
+                    // Auto-play was prevented. This is normal until user interacts.
+                    console.log("Autoplay prevented until interaction.");
+                });
+            }
+        } else {
+            // Pause music
+            audioRef.current.pause();
+        }
+    }
+  }, [activeScreen]);
 
   useEffect(() => {
     if (selectedTeam) {
@@ -494,6 +527,7 @@ const App: React.FC = () => {
 
   return (
     <div className="flex flex-col h-screen max-w-md mx-auto bg-slate-50 font-sans">
+      <audio ref={audioRef} src="https://cdn.pixabay.com/audio/2023/04/12/audio_34d1936357.mp3" loop />
       <main className="flex-grow overflow-y-auto pb-24">{renderContent()}</main>
       <BottomNavBar activeLabel={activeScreen} onNavigate={setActiveScreen} />
     </div>
