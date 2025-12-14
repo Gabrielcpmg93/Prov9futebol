@@ -14,6 +14,7 @@ import MarketScreen from './screens/MarketScreen';
 import PressConferenceScreen from './screens/PressConferenceScreen';
 import SquadScreen from './screens/SquadScreen';
 import SocialScreen from './screens/SocialScreen';
+import YouthAcademyScreen from './screens/YouthAcademyScreen';
 import CareerCreationScreen from './screens/CareerCreationScreen';
 import CareerOfferScreen from './screens/CareerOfferScreen';
 import CareerMenuScreen from './screens/CareerMenuScreen';
@@ -28,7 +29,7 @@ import {
 } from './components/icons';
 import type { ActionListItemData, QuickActionCardData, Team, NewsArticle, TableEntry, Player, LastMatchContext, CareerPlayer, SocialPost, FutGramPost, ReplyOption } from './types';
 import { teams } from './data/teams';
-import { getMarketPlayers, getInitialSquad } from './data/players';
+import { getMarketPlayers, getInitialSquad, getYouthPlayers } from './data/players';
 import { generateSocialFeed, generateFutGramFeed } from './data/social';
 
 const App: React.FC = () => {
@@ -39,9 +40,11 @@ const App: React.FC = () => {
   const [leagueTable, setLeagueTable] = useState<TableEntry[]>([]);
   const [friendlyMatchScheduled, setFriendlyMatchScheduled] = useState(false);
   const [marketPlayers, setMarketPlayers] = useState<Player[]>([]);
+  const [youthPlayers, setYouthPlayers] = useState<Player[]>([]);
   const [lastMatchContext, setLastMatchContext] = useState<LastMatchContext | null>(null);
   const [squad, setSquad] = useState<Player[]>([]);
   const [leagueMatchCycleIndex, setLeagueMatchCycleIndex] = useState(0);
+  const [budget, setBudget] = useState(10000000); // 10 Million initial budget
   
   // Social & Team State
   const [socialFeed, setSocialFeed] = useState<SocialPost[]>([]);
@@ -68,6 +71,7 @@ const App: React.FC = () => {
       }));
       setLeagueTable(initialTable);
       setMarketPlayers(getMarketPlayers());
+      setYouthPlayers(getYouthPlayers());
       setSquad(getInitialSquad());
       setSocialFeed(generateSocialFeed(null, selectedTeam.name)); // Initial neutral feed
       setFutGramFeed(generateFutGramFeed());
@@ -216,7 +220,6 @@ const App: React.FC = () => {
   };
 
   const handleSocialReply = (postId: string, option: ReplyOption) => {
-      // Apply consequence
       switch(option.consequence.type) {
           case 'fan_approval':
               setFanApproval(prev => Math.max(0, Math.min(100, prev + option.consequence.change)));
@@ -226,14 +229,13 @@ const App: React.FC = () => {
               break;
       }
       
-      // Update Post with Comment and Reply
       setSocialFeed(prev => prev.map(post => {
           if (post.id === postId) {
               return {
                   ...post,
                   userComment: option.text,
                   authorResponse: option.authorReply,
-                  isInteractive: false // Disable further replying
+                  isInteractive: false
               }
           }
           return post;
@@ -266,6 +268,23 @@ const App: React.FC = () => {
     else alert(`${title} clicado!`);
   };
 
+  const handleSkipWeek = () => {
+      // Calculate total weekly salary
+      const totalSalary = squad.reduce((acc, player) => acc + (player.salary || 0), 0);
+      
+      // Deduct from budget
+      setBudget(prev => prev - totalSalary);
+
+      // Decrease contract weeks for all players
+      setSquad(prevSquad => prevSquad.map(player => ({
+          ...player,
+          contractWeeks: Math.max(0, (player.contractWeeks || 0) - 1)
+      })));
+
+      const formattedTotal = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalSalary);
+      alert(`Semana pulada!\n\nSalários pagos: ${formattedTotal}\nOs contratos dos jogadores foram reduzidos em 1 semana.`);
+  };
+
   const handleMainActionClick = (title: string) => {
     if (title === 'Calendário') setActiveScreen('Calendário');
     else if (title === 'Imprensa') {
@@ -274,6 +293,10 @@ const App: React.FC = () => {
     } else if (title === 'Rumo ao Estrelato') {
       if (careerPlayer) setActiveScreen('CareerMenu');
       else setActiveScreen('CareerCreation');
+    } else if (title === 'Categorias de Base') {
+      setActiveScreen('CategoriasBase');
+    } else if (title === 'Pular Semana') {
+      handleSkipWeek();
     } else alert(`${title} clicado!`);
   };
 
@@ -288,7 +311,10 @@ const App: React.FC = () => {
   const handleHirePlayer = (player: Player, salary: number, contractWeeks: number) => {
     const newPlayer = { ...player, salary, contractWeeks };
     setSquad(prevSquad => [...prevSquad, newPlayer].sort((a, b) => (b.skill || 0) - (a.skill || 0)));
+    // Remove from market if it was there
     setMarketPlayers(prevMarket => prevMarket.filter(p => p.id !== player.id));
+    // Remove from youth if it was there
+    setYouthPlayers(prevYouth => prevYouth.filter(p => p.id !== player.id));
   };
 
   const handleCreateCareerPlayer = (name: string, position: CareerPlayer['position']) => {
@@ -334,6 +360,7 @@ const App: React.FC = () => {
       case 'Calendário': return <CalendarScreen onBack={() => setActiveScreen('Início')} onSchedule={handleScheduleFriendlyMatch} />;
       case 'Elenco': return <SquadScreen squad={squad} onBack={() => setActiveScreen('Início')} />;
       case 'Mercado': return <MarketScreen players={marketPlayers} onBack={() => setActiveScreen('Início')} onUpdate={handleUpdateMarket} onHire={handleHirePlayer} />;
+      case 'CategoriasBase': return <YouthAcademyScreen players={youthPlayers} onBack={() => setActiveScreen('Início')} onHire={handleHirePlayer} />;
       case 'Coletiva': return <PressConferenceScreen onBack={() => setActiveScreen('Jogar')} lastMatch={lastMatchContext} />;
       case 'Social': return <SocialScreen feed={socialFeed} futGramFeed={futGramFeed} onReply={handleSocialReply} onLike={handleSocialLike} onFutGramComment={handleFutGramComment} />;
       
@@ -354,6 +381,13 @@ const App: React.FC = () => {
       default:
         return (
            <div className="p-4">
+             {/* Simple Budget Display */}
+             <div className="mb-4 px-2 flex justify-between items-center text-sm font-semibold text-gray-600">
+                 <span>Caixa do Clube:</span>
+                 <span className={budget < 0 ? 'text-red-500' : 'text-green-600'}>
+                     {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(budget)}
+                 </span>
+             </div>
             <div className="space-y-3">
               {mainActions.map((action, index) => (<ActionListItem key={index} {...action} onClick={() => handleMainActionClick(action.title)} />))}
             </div>

@@ -1,7 +1,6 @@
 
 import React from 'react';
 import type { NewsArticle } from '../types';
-import { CameraIcon } from '../components/icons';
 
 interface NewsScreenProps {
   articles: NewsArticle[];
@@ -38,44 +37,46 @@ const NewsScreen: React.FC<NewsScreenProps> = ({ articles, onBack }) => {
                 <p className="text-xs text-gray-500 font-sans uppercase tracking-widest">Manchete do Dia - Partida {mainArticle.matchDay}</p>
                 <h2 className="text-3xl font-bold text-gray-900 my-2 leading-tight">{mainArticle.headline}</h2>
                 
-                <div className="flex flex-col md:flex-row gap-4 my-4">
-                  <div className="md:w-1/2 w-full h-40 bg-gray-200 border-4 border-white shadow-md flex items-center justify-center">
-                    <div className="text-center text-gray-400">
-                      <CameraIcon className="w-12 h-12 mx-auto" />
-                      <p className="text-xs font-sans mt-1">FOTO DO JOGO</p>
-                    </div>
-                  </div>
-                  <div className="flex-grow flex items-center justify-center bg-white p-4 border border-gray-300 shadow-sm">
+                <div className="my-6 p-6 bg-white border-y-4 border-double border-gray-300 shadow-sm">
                     <div className="text-center w-full">
                       <div className="grid grid-cols-3 items-center gap-2">
-                        <p className="text-lg font-bold text-right truncate">{mainArticle.userTeamName}</p>
-                        <p className="text-4xl font-black font-sans my-1">{mainArticle.userScore} x {mainArticle.opponentScore}</p>
-                        <p className="text-lg font-bold text-left truncate">{mainArticle.opponentTeamName}</p>
+                        <p className="text-xl font-bold text-right truncate text-gray-800">{mainArticle.userTeamName}</p>
+                        <div className="flex flex-col items-center">
+                            <p className="text-5xl font-black font-sans my-1 tracking-tighter">{mainArticle.userScore} x {mainArticle.opponentScore}</p>
+                            <span className="text-xs font-sans text-gray-500 uppercase">Placar Final</span>
+                        </div>
+                        <p className="text-xl font-bold text-left truncate text-gray-800">{mainArticle.opponentTeamName}</p>
                       </div>
                     </div>
-                  </div>
                 </div>
 
-                <p className="font-sans text-gray-700 leading-relaxed">
-                  Em uma partida memorável, as equipes se enfrentaram em um duelo tático que agitou as arquibancadas. O resultado final, selado em <span className="font-bold">{mainArticle.userScore} a {mainArticle.opponentScore}</span>, reflete os momentos de domínio e as falhas que definiram o confronto. A torcida agora aguarda ansiosamente os desdobramentos na tabela.
-                </p>
+                <div className="columns-1 md:columns-2 gap-6 space-y-4">
+                    <p className="font-sans text-gray-800 leading-relaxed text-justify first-letter:text-5xl first-letter:font-bold first-letter:float-left first-letter:mr-2 first-letter:mt-[-6px]">
+                    Em uma partida que certamente ficará na memória dos torcedores, as equipes protagonizaram um duelo tático intenso. O resultado final, selado em <span className="font-bold">{mainArticle.userScore} a {mainArticle.opponentScore}</span>, reflete os momentos de domínio territorial e as oportunidades criadas ao longo dos 90 minutos.
+                    </p>
+                    <p className="font-sans text-gray-800 leading-relaxed text-justify">
+                    A torcida, que compareceu em peso, viu um espetáculo de entrega física. Especialistas apontam que as substituições feitas no segundo tempo foram cruciais para a dinâmica final do confronto. Agora, os olhares se voltam para a tabela de classificação e os preparativos para a próxima rodada do campeonato.
+                    </p>
+                </div>
               </section>
             )}
 
             {olderArticles.length > 0 && (
-              <hr className="border-t-2 border-gray-300 my-4" />
+              <hr className="border-t-2 border-gray-900 my-8" />
             )}
 
             {olderArticles.length > 0 && (
               <section>
-                <h3 className="text-xl font-bold text-gray-800 border-b-2 border-gray-300 pb-2 mb-4">Outras Partidas</h3>
-                <div className="space-y-4">
+                <h3 className="text-xl font-bold text-gray-800 border-b-2 border-gray-300 pb-2 mb-4 uppercase tracking-wide">Arquivo de Partidas</h3>
+                <div className="grid grid-cols-1 gap-4">
                   {olderArticles.map(article => (
-                    <div key={article.matchDay} className="p-3 border border-gray-200 bg-white/50">
-                      <p className="text-xs text-gray-500 font-sans">Partida {article.matchDay}</p>
-                      <h4 className="font-bold text-lg text-gray-900">{article.headline}</h4>
-                      <p className="font-sans font-semibold text-gray-700 mt-1">
-                        {article.userTeamName} {article.userScore} x {article.opponentScore} {article.opponentTeamName}
+                    <div key={article.matchDay} className="p-3 border-l-4 border-gray-400 bg-white shadow-sm hover:bg-gray-50 transition-colors">
+                      <div className="flex justify-between items-baseline mb-1">
+                          <h4 className="font-bold text-md text-gray-900">{article.headline}</h4>
+                          <span className="text-xs text-gray-500 font-sans font-bold bg-gray-200 px-2 py-0.5 rounded">Jornada {article.matchDay}</span>
+                      </div>
+                      <p className="font-sans font-medium text-gray-700">
+                        {article.userTeamName} <span className="text-black font-bold mx-1">{article.userScore} - {article.opponentScore}</span> {article.opponentTeamName}
                       </p>
                     </div>
                   ))}
