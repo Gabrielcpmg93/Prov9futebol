@@ -20,6 +20,9 @@ import CareerOfferScreen from './screens/CareerOfferScreen';
 import CareerMenuScreen from './screens/CareerMenuScreen';
 import TrophyRoomScreen from './screens/TrophyRoomScreen';
 import ChestRewardModal from './components/ChestRewardModal';
+import ChampionModal from './components/ChampionModal';
+import CopaTeamSelectionScreen from './screens/CopaTeamSelectionScreen';
+import CopaGroupStageScreen from './screens/CopaGroupStageScreen';
 import {
   CalendarIcon,
   MicIcon,
@@ -29,9 +32,11 @@ import {
   BellIcon,
   StarIcon,
   TrophyIcon,
+  GlobeIcon,
 } from './components/icons';
-import type { ActionListItemData, QuickActionCardData, Team, NewsArticle, TableEntry, Player, LastMatchContext, CareerPlayer, SocialPost, FutGramPost, ReplyOption, Trophy } from './types';
+import type { ActionListItemData, QuickActionCardData, Team, NewsArticle, TableEntry, Player, LastMatchContext, CareerPlayer, SocialPost, FutGramPost, ReplyOption, Trophy, CopaGroup } from './types';
 import { teams } from './data/teams';
+import { getCopaTeams } from './data/copaTeams';
 import { getMarketPlayers, getInitialSquad, getYouthPlayers, generateRandomPlayer } from './data/players';
 import { generateSocialFeed, generateFutGramFeed } from './data/social';
 
@@ -53,6 +58,7 @@ const App: React.FC = () => {
   // Chest State
   const [hasOpenedChest, setHasOpenedChest] = useState(false);
   const [chestReward, setChestReward] = useState<{ type: 'money'; value: number } | { type: 'player'; player: Player } | null>(null);
+  const [championModalInfo, setChampionModalInfo] = useState<{ competition: string; team: Team; } | null>(null);
 
   // Social & Team State
   const [socialFeed, setSocialFeed] = useState<SocialPost[]>([]);
@@ -62,6 +68,12 @@ const App: React.FC = () => {
   
   // Career Mode State
   const [careerPlayer, setCareerPlayer] = useState<CareerPlayer | null>(null);
+
+  // Copa das Américas State
+  const [copaUserTeam, setCopaUserTeam] = useState<Team | null>(null);
+  const [copaGroups, setCopaGroups] = useState<CopaGroup[]>([]);
+  const [copaMatchQueue, setCopaMatchQueue] = useState<Team[]>([]);
+  const [currentCopaOpponent, setCurrentCopaOpponent] = useState<Team | null>(null);
 
   // Audio Reference
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -138,6 +150,14 @@ const App: React.FC = () => {
       iconColor: 'text-yellow-600',
       title: 'Rumo ao Estrelato',
       subtitle: 'Crie seu jogador e viva o sonho',
+      action: { type: 'arrow' },
+    },
+     {
+      icon: <GlobeIcon />,
+      bgColor: 'bg-cyan-100',
+      iconColor: 'text-cyan-600',
+      title: 'Copa das Américas',
+      subtitle: 'Dispute a glória continental',
       action: { type: 'arrow' },
     },
     {
@@ -279,6 +299,7 @@ const App: React.FC = () => {
         if (newUserPoints >= 89) {
             const hasAlreadyWon = trophies.some(t => t.name === 'Brasileirão Série A' && t.year === 2024);
             if (!hasAlreadyWon) {
+                setChampionModalInfo({ competition: 'Brasileirão Série A', team: selectedTeam });
                 const newTrophy: Trophy = {
                     id: `trophy-${Date.now()}`,
                     name: 'Brasileirão Série A',
@@ -286,7 +307,6 @@ const App: React.FC = () => {
                     dateEarned: new Date().toLocaleDateString('pt-BR')
                 };
                 setTrophies(prev => [...prev, newTrophy]);
-                alert(`PARABÉNS! VOCÊ É O CAMPEÃO BRASILEIRO COM ${newUserPoints} PONTOS! 🏆\n\nConfira sua nova conquista na Sala de Troféus.`);
             }
         }
 
@@ -385,6 +405,8 @@ const App: React.FC = () => {
       handleSkipWeek();
     } else if (title === 'Sala de Troféus') {
       setActiveScreen('SalaTrofeus');
+    } else if (title === 'Copa das Américas') {
+      setActiveScreen('CopaTeamSelection');
     } else alert(`${title} clicado!`);
   };
 
@@ -459,6 +481,83 @@ const App: React.FC = () => {
           setHasOpenedChest(false);
       }, 2000); // 2 seconds delay
   };
+  
+  // --- Copa das Américas Logic ---
+  const setupCopaTournament = (userTeam: Team) => {
+    const allCopaTeams = getCopaTeams(userTeam);
+    
+    // Create 5 groups of 5
+    const groups: CopaGroup[] = [];
+    const groupNames = ['A', 'B', 'C', 'D', 'E'];
+    for (let i = 0; i < 5; i++) {
+        groups.push({
+            name: groupNames[i],
+            teams: allCopaTeams.slice(i * 5, (i + 1) * 5)
+        });
+    }
+    setCopaGroups(groups);
+
+    // Find user's group and set up match queue
+    const userGroup = groups.find(g => g.teams.some(t => t.id === userTeam.id));
+    if (userGroup) {
+        const opponents = userGroup.teams.filter(t => t.id !== userTeam.id);
+        
+        // Find a strong opponent for the final from another group
+        const otherGroups = groups.filter(g => g.name !== userGroup.name);
+        const finalOpponent = otherGroups[0].teams[0]; // Simple selection for demo
+        
+        setCopaMatchQueue([...opponents, finalOpponent]);
+    }
+  };
+
+  const handleSelectCopaTeam = (team: Team) => {
+    setCopaUserTeam(team);
+    setupCopaTournament(team);
+    setActiveScreen('CopaGroupStage');
+  };
+
+  const handlePlayNextCopaMatch = () => {
+    const nextOpponent = copaMatchQueue[0];
+    setCurrentCopaOpponent(nextOpponent);
+    setActiveScreen('CopaMatch');
+  };
+
+  const handleCopaMatchEnd = () => {
+    // Force a win for the user in Copa matches for simplicity
+    const remainingMatches = copaMatchQueue.slice(1);
+    setCopaMatchQueue(remainingMatches);
+
+    if (remainingMatches.length === 0) {
+      // Champion!
+      setChampionModalInfo({ competition: 'Copa das Américas', team: copaUserTeam! });
+      const newTrophy: Trophy = {
+          id: `trophy-copa-${Date.now()}`,
+          name: 'Copa das Américas',
+          year: 2024,
+          dateEarned: new Date().toLocaleDateString('pt-BR')
+      };
+      setTrophies(prev => [...prev, newTrophy]);
+    } else {
+      // Back to group stage screen
+      setActiveScreen('CopaGroupStage');
+    }
+  };
+
+  const resetCopaState = () => {
+      setCopaUserTeam(null);
+      setCopaGroups([]);
+      setCopaMatchQueue([]);
+      setCurrentCopaOpponent(null);
+  }
+
+  const handleCloseChampionModal = () => {
+      setChampionModalInfo(null);
+      if (activeScreen === 'CopaMatch') {
+          resetCopaState();
+          setActiveScreen('Início');
+      }
+  };
+
 
   if (!selectedTeam) {
     return <TeamSelectionScreen teams={teams} onSelectTeam={setSelectedTeam} />;
@@ -496,6 +595,11 @@ const App: React.FC = () => {
       case 'AssistindoPartida': return <GameScreen userTeam={selectedTeam} opponentTeam={teams.find(t => t.id !== selectedTeam.id)!} onBack={() => setActiveScreen('Jogar')} matchDay={matchDay} onMatchEnd={handleMatchEnd} isFriendly={false} />;
       case 'AssistindoAmistoso': return <GameScreen userTeam={selectedTeam} opponentTeam={teams.find(t => t.id !== selectedTeam.id)!} onBack={() => { setActiveScreen('Jogar'); setFriendlyMatchScheduled(false); }} onMatchEnd={handleMatchEnd} isFriendly={true} />;
       
+      // Copa das Américas Screens
+      case 'CopaTeamSelection': return <CopaTeamSelectionScreen teams={teams} onSelectTeam={handleSelectCopaTeam} onBack={() => setActiveScreen('Início')} />;
+      case 'CopaGroupStage': return copaUserTeam ? <CopaGroupStageScreen groups={copaGroups} userTeam={copaUserTeam} matchQueue={copaMatchQueue} onPlayNextMatch={handlePlayNextCopaMatch} onBack={() => { resetCopaState(); setActiveScreen('Início'); }} /> : null;
+      case 'CopaMatch': return (copaUserTeam && currentCopaOpponent) ? <GameScreen userTeam={copaUserTeam} opponentTeam={currentCopaOpponent} onBack={() => setActiveScreen('CopaGroupStage')} onMatchEnd={handleCopaMatchEnd} isFriendly={true} headerText={copaMatchQueue.length === 0 ? "Final da Copa" : "Copa das Américas"} /> : null;
+
       case 'Início':
       default:
         return (
@@ -610,6 +714,13 @@ const App: React.FC = () => {
       
       {chestReward && (
           <ChestRewardModal reward={chestReward} onClose={handleCloseChestReward} />
+      )}
+      {championModalInfo && (
+          <ChampionModal 
+            team={championModalInfo.team} 
+            competition={championModalInfo.competition} 
+            onClose={handleCloseChampionModal} 
+          />
       )}
     </div>
   );

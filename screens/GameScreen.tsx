@@ -53,7 +53,7 @@ const initializePlayers = () => {
 };
 
 
-const GameScreen: React.FC<GameScreenProps> = ({ userTeam, opponentTeam, onBack, matchDay, onMatchEnd, isFriendly = false }) => {
+const GameScreen: React.FC<GameScreenProps> = ({ userTeam, opponentTeam, onBack, matchDay, onMatchEnd, isFriendly = false, headerText }) => {
   const [userScore, setUserScore] = useState(0);
   const [opponentScore, setOpponentScore] = useState(0);
   const [gameTime, setGameTime] = useState(0);
@@ -138,7 +138,7 @@ const GameScreen: React.FC<GameScreenProps> = ({ userTeam, opponentTeam, onBack,
           </svg>
         </button>
         <p className="font-bold text-sm">
-          {isFriendly ? 'Partida Amistosa' : `Brasileirão - Partida ${matchDay}`}
+           {headerText ? headerText : (isFriendly ? 'Partida Amistosa' : `Brasileirão - Partida ${matchDay}`)}
         </p>
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-x-2 font-bold my-1">
             <span className="text-lg text-right truncate">{userTeam.name}</span>

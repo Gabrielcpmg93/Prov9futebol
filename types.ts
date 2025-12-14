@@ -91,6 +91,7 @@ export interface GameScreenProps {
   matchDay?: number;
   onMatchEnd?: () => void;
   isCareerMode?: boolean; // New flag for visual indication
+  headerText?: string;
 }
 
 export interface TableScreenProps {
@@ -209,4 +210,24 @@ export interface SocialScreenProps {
     onReply: (postId: string, option: ReplyOption) => void;
     onLike: (app: 'Twitta' | 'FutGram', postId: string) => void;
     onFutGramComment: (postId: string, comment: string) => void;
+}
+
+// --- Copa das Américas Types ---
+export interface CopaTeamSelectionScreenProps {
+    teams: Team[];
+    onSelectTeam: (team: Team) => void;
+    onBack: () => void;
+}
+
+export interface CopaGroup {
+    name: string;
+    teams: Team[];
+}
+
+export interface CopaGroupStageScreenProps {
+    groups: CopaGroup[];
+    userTeam: Team;
+    matchQueue: Team[];
+    onPlayNextMatch: () => void;
+    onBack: () => void;
 }
