@@ -65,17 +65,9 @@ const App: React.FC = () => {
   // Audio Reference
   const audioRef = useRef<HTMLAudioElement>(null);
 
+  // Super Mudança: Música toca em todas as telas para imersão total
   const isMusicScreen = (screen: string) => {
-    const screensWithMusic = [
-        'Início', 
-        'Calendário', 
-        'Coletiva', 
-        'CategoriasBase', 
-        'Social', 
-        'Elenco', 
-        'Mercado'
-    ];
-    return screensWithMusic.includes(screen);
+    return true; 
   };
 
   // Background Music Logic
@@ -84,12 +76,14 @@ const App: React.FC = () => {
         audioRef.current.volume = volume;
         
         if (isMusicScreen(activeScreen)) {
-            const playPromise = audioRef.current.play();
-            if (playPromise !== undefined) {
-                playPromise.catch(error => {
-                    // Auto-play was prevented. This is normal until user interacts.
-                    console.log("Autoplay prevented until interaction.");
-                });
+            // Check if already playing to avoid interruption
+            if (audioRef.current.paused) {
+                const playPromise = audioRef.current.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(error => {
+                        console.log("Autoplay prevented until interaction.");
+                    });
+                }
             }
         } else {
             audioRef.current.pause();
@@ -97,7 +91,7 @@ const App: React.FC = () => {
     }
   }, [activeScreen, volume]);
 
-  // Fix Autoplay on Interaction
+  // Fix Autoplay on Interaction (Global click listener)
   useEffect(() => {
     const handleInteraction = () => {
         if (audioRef.current && audioRef.current.paused && isMusicScreen(activeScreen)) {
@@ -549,7 +543,7 @@ const App: React.FC = () => {
 
   return (
     <div className="flex flex-col h-screen max-w-md mx-auto bg-slate-50 font-sans relative">
-      <audio ref={audioRef} src="https://cdn.pixabay.com/audio/2023/04/12/audio_34d1936357.mp3" loop />
+      <audio ref={audioRef} src="https://cdn.pixabay.com/audio/2023/04/12/audio_34d1936357.mp3" loop autoPlay />
       
       {/* Volume Control Widget */}
       {isMusicScreen(activeScreen) && (
