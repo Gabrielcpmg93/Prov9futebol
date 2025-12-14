@@ -19,6 +19,7 @@ import CareerCreationScreen from './screens/CareerCreationScreen';
 import CareerOfferScreen from './screens/CareerOfferScreen';
 import CareerMenuScreen from './screens/CareerMenuScreen';
 import TrophyRoomScreen from './screens/TrophyRoomScreen';
+import ChestRewardModal from './components/ChestRewardModal';
 import {
   CalendarIcon,
   MicIcon,
@@ -51,6 +52,7 @@ const App: React.FC = () => {
   
   // Chest State
   const [hasOpenedChest, setHasOpenedChest] = useState(false);
+  const [chestReward, setChestReward] = useState<{ type: 'money'; value: number } | { type: 'player'; player: Player } | null>(null);
 
   // Social & Team State
   const [socialFeed, setSocialFeed] = useState<SocialPost[]>([]);
@@ -437,18 +439,21 @@ const App: React.FC = () => {
       const isMoney = Math.random() > 0.5;
       
       if (isMoney) {
-          setBudget(prev => prev + 1000);
-          alert("🎉 BAÚ DA SORTE 🎉\n\nVocê encontrou R$ 1.000,00 no baú!\nO valor foi adicionado ao caixa do clube.");
+          const amount = 1000;
+          setBudget(prev => prev + amount);
+          setChestReward({ type: 'money', value: amount });
       } else {
           // Generate a player with strict parameters: OVR 71
           const basePlayer = generateRandomPlayer('reward', true);
           basePlayer.skill = 71;
-          // The name is already fictional from generateRandomPlayer
           
           setSquad(prev => [...prev, basePlayer].sort((a,b) => b.skill - a.skill));
-          alert(`🎉 BAÚ DA SORTE 🎉\n\nVocê encontrou um jogador!\n\nNome: ${basePlayer.name}\nPosição: ${basePlayer.position}\nNível (OVR): 71\n\nEle foi adicionado ao seu elenco.`);
+          setChestReward({ type: 'player', player: basePlayer });
       }
-      
+  };
+
+  const handleCloseChestReward = () => {
+      setChestReward(null);
       // 3. Make chest reappear after a delay (comes back)
       setTimeout(() => {
           setHasOpenedChest(false);
@@ -602,6 +607,10 @@ const App: React.FC = () => {
       
       <main className="flex-grow overflow-y-auto pb-24">{renderContent()}</main>
       <BottomNavBar activeLabel={activeScreen} onNavigate={setActiveScreen} />
+      
+      {chestReward && (
+          <ChestRewardModal reward={chestReward} onClose={handleCloseChestReward} />
+      )}
     </div>
   );
 };
