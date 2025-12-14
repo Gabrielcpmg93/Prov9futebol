@@ -23,6 +23,7 @@ import ChestRewardModal from './components/ChestRewardModal';
 import ChampionModal from './components/ChampionModal';
 import CopaTeamSelectionScreen from './screens/CopaTeamSelectionScreen';
 import CopaGroupStageScreen from './screens/CopaGroupStageScreen';
+import AutoSaveToast from './components/AutoSaveToast';
 import {
   CalendarIcon,
   MicIcon,
@@ -75,8 +76,79 @@ const App: React.FC = () => {
   const [copaMatchQueue, setCopaMatchQueue] = useState<Team[]>([]);
   const [currentCopaOpponent, setCurrentCopaOpponent] = useState<Team | null>(null);
 
+  // AutoSave State
+  const [isSaving, setIsSaving] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const saveTimeoutRef = useRef<number | null>(null);
+
   // Audio Reference
   const audioRef = useRef<HTMLAudioElement>(null);
+
+  // Load game state from localStorage on initial render
+  useEffect(() => {
+    try {
+        const savedData = localStorage.getItem('footballManagerSaveData');
+        if (savedData) {
+            const gameState = JSON.parse(savedData);
+            if (gameState.selectedTeam) {
+                setSelectedTeam(gameState.selectedTeam);
+                setNewsArticles(gameState.newsArticles || []);
+                setMatchDay(gameState.matchDay || 1);
+                setLeagueTable(gameState.leagueTable || []);
+                setFriendlyMatchScheduled(gameState.friendlyMatchScheduled || false);
+                setMarketPlayers(gameState.marketPlayers || getMarketPlayers());
+                setYouthPlayers(gameState.youthPlayers || getYouthPlayers());
+                setSquad(gameState.squad || getInitialSquad());
+                setLeagueMatchCycleIndex(gameState.leagueMatchCycleIndex || 0);
+                setBudget(gameState.budget === undefined ? 10000000 : gameState.budget);
+                setTrophies(gameState.trophies || []);
+                setSocialFeed(gameState.socialFeed || []);
+                setFutGramFeed(gameState.futGramFeed || []);
+                setFanApproval(gameState.fanApproval || 70);
+                setTeamMorale(gameState.teamMorale || 75);
+                setCareerPlayer(gameState.careerPlayer || null);
+            }
+        }
+    } catch (error) {
+        console.error("Failed to load game state:", error);
+        localStorage.removeItem('footballManagerSaveData');
+    } finally {
+        setIsLoaded(true);
+    }
+  }, []);
+
+  // Debounced auto-save effect
+  useEffect(() => {
+    if (!isLoaded || !selectedTeam) return;
+
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+
+    saveTimeoutRef.current = window.setTimeout(() => {
+        setIsSaving(true);
+        const gameState = {
+            selectedTeam, newsArticles, matchDay, leagueTable, friendlyMatchScheduled, 
+            marketPlayers, youthPlayers, squad, leagueMatchCycleIndex, budget, trophies, 
+            socialFeed, futGramFeed, fanApproval, teamMorale, careerPlayer,
+        };
+
+        try {
+            localStorage.setItem('footballManagerSaveData', JSON.stringify(gameState));
+        } catch (error) {
+            console.error("Failed to save game state:", error);
+        }
+
+        setTimeout(() => setIsSaving(false), 1500);
+    }, 2000);
+
+    return () => {
+        if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+    };
+  }, [
+      selectedTeam, newsArticles, matchDay, leagueTable, friendlyMatchScheduled, 
+      marketPlayers, youthPlayers, squad, leagueMatchCycleIndex, budget, trophies, 
+      socialFeed, futGramFeed, fanApproval, teamMorale, careerPlayer, isLoaded
+  ]);
+
 
   // Super Mudança: Música toca em todas as telas para imersão total
   const isMusicScreen = (screen: string) => {
@@ -121,7 +193,7 @@ const App: React.FC = () => {
   }, [activeScreen]);
 
   useEffect(() => {
-    if (selectedTeam) {
+    if (selectedTeam && !isLoaded) { // Only run for new games, not loaded games
       const initialTable = teams.map(team => ({
         teamId: team.id,
         teamName: team.name,
@@ -141,7 +213,7 @@ const App: React.FC = () => {
       setSocialFeed(generateSocialFeed(null, selectedTeam.name)); // Initial neutral feed
       setFutGramFeed(generateFutGramFeed());
     }
-  }, [selectedTeam]);
+  }, [selectedTeam, isLoaded]);
 
   const mainActions: Omit<ActionListItemData, 'onClick'>[] = [
     {
@@ -304,7 +376,7 @@ const App: React.FC = () => {
                     id: `trophy-${Date.now()}`,
                     name: 'Brasileirão Série A',
                     year: 2024,
-                    dateEarned: new Date().toLocaleDateString('pt-BR')
+                    dateEarned: new Date().toLocaleDateString()
                 };
                 setTrophies(prev => [...prev, newTrophy]);
             }
@@ -534,7 +606,7 @@ const App: React.FC = () => {
           id: `trophy-copa-${Date.now()}`,
           name: 'Copa das Américas',
           year: 2024,
-          dateEarned: new Date().toLocaleDateString('pt-BR')
+          dateEarned: new Date().toLocaleDateString()
       };
       setTrophies(prev => [...prev, newTrophy]);
     } else {
@@ -559,6 +631,11 @@ const App: React.FC = () => {
   };
 
 
+  if (!isLoaded) {
+    // Show a loading screen or null while loading from localStorage
+    return <div className="flex items-center justify-center h-screen">Carregando...</div>;
+  }
+  
   if (!selectedTeam) {
     return <TeamSelectionScreen teams={teams} onSelectTeam={setSelectedTeam} />;
   }
@@ -722,6 +799,7 @@ const App: React.FC = () => {
             onClose={handleCloseChampionModal} 
           />
       )}
+      <AutoSaveToast isVisible={isSaving} />
     </div>
   );
 };

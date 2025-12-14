@@ -46,6 +46,8 @@ const TrophyRoomScreen: React.FC<TrophyRoomScreenProps> = ({ trophies, onBack })
                             <div className="bg-stone-900 text-yellow-500 text-[10px] px-2 py-1 mt-2 border-2 border-yellow-600 rounded-sm text-center w-24">
                                 <p className="font-bold leading-tight">{trophy.name}</p>
                                 <p className="text-stone-400">{trophy.year}</p>
+                                {/* FIX: Display the date the trophy was earned */}
+                                <p className="text-stone-300 text-[9px]">{trophy.dateEarned}</p>
                             </div>
                         </div>
                     ))
