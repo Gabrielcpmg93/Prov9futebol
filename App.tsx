@@ -49,6 +49,10 @@ const App: React.FC = () => {
   const [budget, setBudget] = useState(10000000); // 10 Million initial budget
   const [trophies, setTrophies] = useState<Trophy[]>([]);
   
+  // Audio Control State
+  const [volume, setVolume] = useState(0.3);
+  const [showVolumeControl, setShowVolumeControl] = useState(false);
+
   // Social & Team State
   const [socialFeed, setSocialFeed] = useState<SocialPost[]>([]);
   const [futGramFeed, setFutGramFeed] = useState<FutGramPost[]>([]);
@@ -61,8 +65,7 @@ const App: React.FC = () => {
   // Audio Reference
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  // Background Music Logic
-  useEffect(() => {
+  const isMusicScreen = (screen: string) => {
     const screensWithMusic = [
         'Início', 
         'Calendário', 
@@ -72,11 +75,15 @@ const App: React.FC = () => {
         'Elenco', 
         'Mercado'
     ];
+    return screensWithMusic.includes(screen);
+  };
 
+  // Background Music Logic
+  useEffect(() => {
     if (audioRef.current) {
-        if (screensWithMusic.includes(activeScreen)) {
-            // Play music
-            audioRef.current.volume = 0.3; // Low volume for background
+        audioRef.current.volume = volume;
+        
+        if (isMusicScreen(activeScreen)) {
             const playPromise = audioRef.current.play();
             if (playPromise !== undefined) {
                 playPromise.catch(error => {
@@ -85,10 +92,25 @@ const App: React.FC = () => {
                 });
             }
         } else {
-            // Pause music
             audioRef.current.pause();
         }
     }
+  }, [activeScreen, volume]);
+
+  // Fix Autoplay on Interaction
+  useEffect(() => {
+    const handleInteraction = () => {
+        if (audioRef.current && audioRef.current.paused && isMusicScreen(activeScreen)) {
+            audioRef.current.play().catch(e => console.log(e));
+        }
+    };
+
+    window.addEventListener('click', handleInteraction);
+    window.addEventListener('touchstart', handleInteraction);
+    return () => {
+        window.removeEventListener('click', handleInteraction);
+        window.removeEventListener('touchstart', handleInteraction);
+    };
   }, [activeScreen]);
 
   useEffect(() => {
@@ -526,8 +548,42 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen max-w-md mx-auto bg-slate-50 font-sans">
+    <div className="flex flex-col h-screen max-w-md mx-auto bg-slate-50 font-sans relative">
       <audio ref={audioRef} src="https://cdn.pixabay.com/audio/2023/04/12/audio_34d1936357.mp3" loop />
+      
+      {/* Volume Control Widget */}
+      {isMusicScreen(activeScreen) && (
+          <div className="absolute top-4 right-4 z-50 flex flex-col items-end">
+              <button 
+                onClick={() => setShowVolumeControl(!showVolumeControl)}
+                className="bg-white/80 p-2 rounded-full shadow-md backdrop-blur-sm hover:bg-white text-gray-700 transition-all"
+              >
+                  {volume === 0 ? (
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 9.75L19.5 12m0 0l2.25 2.25M19.5 12l2.25-2.25M19.5 12l-2.25 2.25m-10.5-6l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" />
+                      </svg>
+                  ) : (
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" />
+                      </svg>
+                  )}
+              </button>
+              {showVolumeControl && (
+                  <div className="mt-2 bg-white/90 p-3 rounded-lg shadow-lg flex flex-col items-center animate-fade-in backdrop-blur-md">
+                      <input 
+                        type="range" 
+                        min="0" 
+                        max="1" 
+                        step="0.05" 
+                        value={volume} 
+                        onChange={(e) => setVolume(parseFloat(e.target.value))}
+                        className="w-24 cursor-pointer accent-green-600"
+                      />
+                  </div>
+              )}
+          </div>
+      )}
+
       <main className="flex-grow overflow-y-auto pb-24">{renderContent()}</main>
       <BottomNavBar activeLabel={activeScreen} onNavigate={setActiveScreen} />
     </div>
