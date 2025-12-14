@@ -18,6 +18,7 @@ import YouthAcademyScreen from './screens/YouthAcademyScreen';
 import CareerCreationScreen from './screens/CareerCreationScreen';
 import CareerOfferScreen from './screens/CareerOfferScreen';
 import CareerMenuScreen from './screens/CareerMenuScreen';
+import TrophyRoomScreen from './screens/TrophyRoomScreen';
 import {
   CalendarIcon,
   MicIcon,
@@ -26,8 +27,9 @@ import {
   NewspaperIcon,
   BellIcon,
   StarIcon,
+  TrophyIcon,
 } from './components/icons';
-import type { ActionListItemData, QuickActionCardData, Team, NewsArticle, TableEntry, Player, LastMatchContext, CareerPlayer, SocialPost, FutGramPost, ReplyOption } from './types';
+import type { ActionListItemData, QuickActionCardData, Team, NewsArticle, TableEntry, Player, LastMatchContext, CareerPlayer, SocialPost, FutGramPost, ReplyOption, Trophy } from './types';
 import { teams } from './data/teams';
 import { getMarketPlayers, getInitialSquad, getYouthPlayers } from './data/players';
 import { generateSocialFeed, generateFutGramFeed } from './data/social';
@@ -45,6 +47,7 @@ const App: React.FC = () => {
   const [squad, setSquad] = useState<Player[]>([]);
   const [leagueMatchCycleIndex, setLeagueMatchCycleIndex] = useState(0);
   const [budget, setBudget] = useState(10000000); // 10 Million initial budget
+  const [trophies, setTrophies] = useState<Trophy[]>([]);
   
   // Social & Team State
   const [socialFeed, setSocialFeed] = useState<SocialPost[]>([]);
@@ -119,6 +122,14 @@ const App: React.FC = () => {
       subtitle: 'Treinar e promover promessas (17-29 anos)',
       action: { type: 'arrow' },
     },
+    {
+      icon: <TrophyIcon />,
+      bgColor: 'bg-amber-100',
+      iconColor: 'text-amber-600',
+      title: 'Sala de Troféus',
+      subtitle: 'Suas conquistas gloriosas',
+      action: { type: 'arrow' },
+    },
   ];
 
   const quickActions: (Omit<QuickActionCardData, 'onClick' | 'title'> & { title: string })[] = [
@@ -182,31 +193,53 @@ const App: React.FC = () => {
     const newArticle: NewsArticle = { matchDay, headline, userTeamName, opponentTeamName, userScore, opponentScore };
 
     if (!isFriendly) {
-        setLeagueTable(prevTable => prevTable.map(entry => {
-          if (entry.teamId === selectedTeam.id) {
-            return {
-              ...entry, played: entry.played + 1, wins: entry.wins + (userScore > opponentScore ? 1 : 0),
-              draws: entry.draws + (userScore === opponentScore ? 1 : 0), losses: entry.losses + (userScore < opponentScore ? 1 : 0),
-              goalsFor: entry.goalsFor + userScore, goalsAgainst: entry.goalsAgainst + opponentScore,
-              goalDifference: entry.goalDifference + (userScore - opponentScore),
-              points: entry.points + (userScore > opponentScore ? 3 : userScore === opponentScore ? 1 : 0),
-            };
-          }
-          if (entry.teamId === opponentTeam.id) {
-            return {
-              ...entry, played: entry.played + 1, wins: entry.wins + (opponentScore > userScore ? 1 : 0),
-              draws: entry.draws + (opponentScore === userScore ? 1 : 0), losses: entry.losses + (opponentScore < userScore ? 1 : 0),
-              goalsFor: entry.goalsFor + opponentScore, goalsAgainst: entry.goalsAgainst + userScore,
-              goalDifference: entry.goalDifference + (opponentScore - userScore),
-              points: entry.points + (opponentScore > userScore ? 3 : opponentScore === userScore ? 1 : 0),
-            };
-          }
-          return entry;
-        }).sort((a, b) => {
-          if (b.points !== a.points) return b.points - a.points;
-          return b.goalDifference - a.goalDifference;
-        }));
+        let newUserPoints = 0;
+
+        setLeagueTable(prevTable => {
+            const updatedTable = prevTable.map(entry => {
+                if (entry.teamId === selectedTeam.id) {
+                    const newPoints = entry.points + (userScore > opponentScore ? 3 : userScore === opponentScore ? 1 : 0);
+                    newUserPoints = newPoints;
+                    return {
+                    ...entry, played: entry.played + 1, wins: entry.wins + (userScore > opponentScore ? 1 : 0),
+                    draws: entry.draws + (userScore === opponentScore ? 1 : 0), losses: entry.losses + (userScore < opponentScore ? 1 : 0),
+                    goalsFor: entry.goalsFor + userScore, goalsAgainst: entry.goalsAgainst + opponentScore,
+                    goalDifference: entry.goalDifference + (userScore - opponentScore),
+                    points: newPoints,
+                    };
+                }
+                if (entry.teamId === opponentTeam.id) {
+                    return {
+                    ...entry, played: entry.played + 1, wins: entry.wins + (opponentScore > userScore ? 1 : 0),
+                    draws: entry.draws + (opponentScore === userScore ? 1 : 0), losses: entry.losses + (opponentScore < userScore ? 1 : 0),
+                    goalsFor: entry.goalsFor + opponentScore, goalsAgainst: entry.goalsAgainst + userScore,
+                    goalDifference: entry.goalDifference + (opponentScore - userScore),
+                    points: entry.points + (opponentScore > userScore ? 3 : opponentScore === userScore ? 1 : 0),
+                    };
+                }
+                return entry;
+            });
+            return updatedTable.sort((a, b) => {
+                if (b.points !== a.points) return b.points - a.points;
+                return b.goalDifference - a.goalDifference;
+            });
+        });
         
+        // Check for Championship Condition (89 Points)
+        if (newUserPoints >= 89) {
+            const hasAlreadyWon = trophies.some(t => t.name === 'Brasileirão Série A' && t.year === 2024);
+            if (!hasAlreadyWon) {
+                const newTrophy: Trophy = {
+                    id: `trophy-${Date.now()}`,
+                    name: 'Brasileirão Série A',
+                    year: 2024,
+                    dateEarned: new Date().toLocaleDateString('pt-BR')
+                };
+                setTrophies(prev => [...prev, newTrophy]);
+                alert(`PARABÉNS! VOCÊ É O CAMPEÃO BRASILEIRO COM ${newUserPoints} PONTOS! 🏆\n\nConfira sua nova conquista na Sala de Troféus.`);
+            }
+        }
+
         setMatchDay(prev => prev + 1);
         setLeagueMatchCycleIndex(prev => (prev + 1) % 3);
     }
@@ -297,6 +330,8 @@ const App: React.FC = () => {
       setActiveScreen('CategoriasBase');
     } else if (title === 'Pular Semana') {
       handleSkipWeek();
+    } else if (title === 'Sala de Troféus') {
+      setActiveScreen('SalaTrofeus');
     } else alert(`${title} clicado!`);
   };
 
@@ -361,6 +396,7 @@ const App: React.FC = () => {
       case 'Elenco': return <SquadScreen squad={squad} onBack={() => setActiveScreen('Início')} />;
       case 'Mercado': return <MarketScreen players={marketPlayers} onBack={() => setActiveScreen('Início')} onUpdate={handleUpdateMarket} onHire={handleHirePlayer} />;
       case 'CategoriasBase': return <YouthAcademyScreen players={youthPlayers} onBack={() => setActiveScreen('Início')} onHire={handleHirePlayer} />;
+      case 'SalaTrofeus': return <TrophyRoomScreen trophies={trophies} onBack={() => setActiveScreen('Início')} />;
       case 'Coletiva': return <PressConferenceScreen onBack={() => setActiveScreen('Jogar')} lastMatch={lastMatchContext} />;
       case 'Social': return <SocialScreen feed={socialFeed} futGramFeed={futGramFeed} onReply={handleSocialReply} onLike={handleSocialLike} onFutGramComment={handleFutGramComment} />;
       

@@ -76,6 +76,13 @@ export interface TableEntry {
   points: number;
 }
 
+export interface Trophy {
+  id: string;
+  name: string;
+  year: number;
+  dateEarned: string;
+}
+
 export interface GameScreenProps {
   userTeam: Team;
   opponentTeam: Team;
@@ -125,6 +132,11 @@ export interface PressConferenceScreenProps {
 
 export interface SquadScreenProps {
   squad: Player[];
+  onBack: () => void;
+}
+
+export interface TrophyRoomScreenProps {
+  trophies: Trophy[];
   onBack: () => void;
 }
 
