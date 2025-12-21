@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useRef } from 'react';
 import ActionListItem from './components/ActionListItem';
 import QuickActionCard from './components/QuickActionCard';
@@ -83,6 +84,8 @@ const App: React.FC = () => {
 
   // Audio Reference
   const audioRef = useRef<HTMLAudioElement>(null);
+
+  const TOTAL_MATCH_DAYS = (teams.length - 1);
 
   // Load game state from localStorage on initial render
   useEffect(() => {
@@ -193,7 +196,7 @@ const App: React.FC = () => {
   }, [activeScreen]);
 
   useEffect(() => {
-    if (selectedTeam && !isLoaded) { // Only run for new games, not loaded games
+    if (selectedTeam && leagueTable.length === 0 && !isLoaded) { // Only run for new games
       const initialTable = teams.map(team => ({
         teamId: team.id,
         teamName: team.name,
@@ -213,7 +216,7 @@ const App: React.FC = () => {
       setSocialFeed(generateSocialFeed(null, selectedTeam.name)); // Initial neutral feed
       setFutGramFeed(generateFutGramFeed());
     }
-  }, [selectedTeam, isLoaded]);
+  }, [selectedTeam, isLoaded, leagueTable.length]);
 
   const mainActions: Omit<ActionListItemData, 'onClick'>[] = [
     {
@@ -297,15 +300,26 @@ const App: React.FC = () => {
   
   const handleMatchEnd = () => {
     if (!selectedTeam) return;
+    
+    // Add new youth player after every match
+    const newYouthPlayer = generateRandomPlayer(`youth-${Date.now()}`, false, 17, 21);
+    setYouthPlayers(prev => [newYouthPlayer, ...prev]);
 
     const isFriendly = activeScreen === 'AssistindoAmistoso';
 
     let userScore, opponentScore;
+    
+    // Determine opponent for league matches
+    const availableOpponents = teams.filter(t => t.id !== selectedTeam.id);
+    const opponentTeam = isFriendly 
+        ? availableOpponents[Math.floor(Math.random() * availableOpponents.length)]
+        : availableOpponents[(matchDay - 1) % availableOpponents.length];
 
     if (isFriendly) {
       userScore = Math.floor(Math.random() * 4);
       opponentScore = Math.floor(Math.random() * 4);
     } else {
+      // Simple win/loss cycle for league games
       const outcome = leagueMatchCycleIndex;
       if (outcome < 2) { // Win
         userScore = Math.floor(Math.random() * 2) + 2;
@@ -316,7 +330,6 @@ const App: React.FC = () => {
       }
     }
 
-    const opponentTeam = teams.find(t => t.id !== selectedTeam.id)!;
     const userTeamName = selectedTeam.name;
     const opponentTeamName = opponentTeam.name;
 
@@ -335,19 +348,16 @@ const App: React.FC = () => {
     const newArticle: NewsArticle = { matchDay, headline, userTeamName, opponentTeamName, userScore, opponentScore };
 
     if (!isFriendly) {
-        let newUserPoints = 0;
-
+        let finalTable: TableEntry[] = [];
         setLeagueTable(prevTable => {
             const updatedTable = prevTable.map(entry => {
                 if (entry.teamId === selectedTeam.id) {
-                    const newPoints = entry.points + (userScore > opponentScore ? 3 : userScore === opponentScore ? 1 : 0);
-                    newUserPoints = newPoints;
                     return {
                     ...entry, played: entry.played + 1, wins: entry.wins + (userScore > opponentScore ? 1 : 0),
                     draws: entry.draws + (userScore === opponentScore ? 1 : 0), losses: entry.losses + (userScore < opponentScore ? 1 : 0),
                     goalsFor: entry.goalsFor + userScore, goalsAgainst: entry.goalsAgainst + opponentScore,
                     goalDifference: entry.goalDifference + (userScore - opponentScore),
-                    points: newPoints,
+                    points: entry.points + (userScore > opponentScore ? 3 : userScore === opponentScore ? 1 : 0),
                     };
                 }
                 if (entry.teamId === opponentTeam.id) {
@@ -361,38 +371,45 @@ const App: React.FC = () => {
                 }
                 return entry;
             });
-            return updatedTable.sort((a, b) => {
-                if (b.points !== a.points) return b.points - a.points;
-                return b.goalDifference - a.goalDifference;
-            });
+            finalTable = [...updatedTable].sort((a, b) => b.points - a.points || b.goalDifference - a.goalDifference);
+            return updatedTable;
         });
         
-        // Check for Championship Condition (89 Points)
-        if (newUserPoints >= 89) {
-            const hasAlreadyWon = trophies.some(t => t.name === 'Brasileirão Série A' && t.year === 2024);
-            if (!hasAlreadyWon) {
-                setChampionModalInfo({ competition: 'Brasileirão Série A', team: selectedTeam });
-                const newTrophy: Trophy = {
-                    id: `trophy-${Date.now()}`,
-                    name: 'Brasileirão Série A',
-                    year: 2024,
-                    dateEarned: new Date().toLocaleDateString()
-                };
-                setTrophies(prev => [...prev, newTrophy]);
-            }
+        // --- Season End Logic ---
+        if (matchDay >= TOTAL_MATCH_DAYS) {
+            setTimeout(() => { // Delay to allow state to update before checking
+                const champion = finalTable[0];
+                if (champion && champion.teamId === selectedTeam.id) {
+                    const hasAlreadyWon = trophies.some(t => t.name === 'Brasileirão Série A' && t.year === 2024);
+                    if (!hasAlreadyWon) {
+                        setChampionModalInfo({ competition: 'Brasileirão Série A', team: selectedTeam });
+                        const newTrophy: Trophy = {
+                            id: `trophy-${Date.now()}`, name: 'Brasileirão Série A', year: 2024,
+                            dateEarned: new Date().toLocaleDateString()
+                        };
+                        setTrophies(prev => [...prev, newTrophy]);
+                    }
+                }
+                alert("Fim da temporada! A tabela será reiniciada.");
+                setMatchDay(1);
+                setLeagueTable(prev => prev.map(t => ({ ...t, played: 0, wins: 0, draws: 0, losses: 0, goalsFor: 0, goalsAgainst: 0, goalDifference: 0, points: 0 })));
+            }, 500);
+        } else {
+            setMatchDay(prev => prev + 1);
         }
 
-        setMatchDay(prev => prev + 1);
         setLeagueMatchCycleIndex(prev => (prev + 1) % 3);
     }
     
+    // FIX: Correctly pass opponentTeamName to the newMatchContext object.
     const newMatchContext: LastMatchContext = { userScore, opponentScore, opponentName: opponentTeamName, isFriendly, result };
     setNewsArticles(prev => [newArticle, ...prev]);
     setLastMatchContext(newMatchContext);
     setSocialFeed(generateSocialFeed(newMatchContext, selectedTeam.name));
-    setFutGramFeed(generateFutGramFeed()); // New photos after match
+    setFutGramFeed(generateFutGramFeed());
     setActiveScreen('Coletiva');
   };
+
 
   const handleSocialReply = (postId: string, option: ReplyOption) => {
       switch(option.consequence.type) {
@@ -597,6 +614,10 @@ const App: React.FC = () => {
   const handleCopaMatchEnd = () => {
     // Force a win for the user in Copa matches for simplicity
     const remainingMatches = copaMatchQueue.slice(1);
+    
+    const newYouthPlayer = generateRandomPlayer(`youth-${Date.now()}`, false, 17, 21);
+    setYouthPlayers(prev => [newYouthPlayer, ...prev]);
+
     setCopaMatchQueue(remainingMatches);
 
     if (remainingMatches.length === 0) {
@@ -633,7 +654,7 @@ const App: React.FC = () => {
 
   if (!isLoaded) {
     // Show a loading screen or null while loading from localStorage
-    return <div className="flex items-center justify-center h-screen">Carregando...</div>;
+    return <div className="flex items-center justify-center h-screen bg-slate-800 text-white font-bold">CARREGANDO JOGO...</div>;
   }
   
   if (!selectedTeam) {
@@ -669,7 +690,7 @@ const App: React.FC = () => {
           return <GameScreen userTeam={currentCareerTeam} opponentTeam={randomOpponent} onBack={() => setActiveScreen('CareerMenu')} onMatchEnd={handleCareerMatchEnd} isFriendly={true} isCareerMode={true} />;
       
       case 'Jogar': return <GameMenuScreen onStartMatch={() => setActiveScreen('AssistindoPartida')} isFriendlyMatchAvailable={friendlyMatchScheduled} onStartFriendlyMatch={() => setActiveScreen('AssistindoAmistoso')} />;
-      case 'AssistindoPartida': return <GameScreen userTeam={selectedTeam} opponentTeam={teams.find(t => t.id !== selectedTeam.id)!} onBack={() => setActiveScreen('Jogar')} matchDay={matchDay} onMatchEnd={handleMatchEnd} isFriendly={false} />;
+      case 'AssistindoPartida': return <GameScreen userTeam={selectedTeam} opponentTeam={teams.filter(t => t.id !== selectedTeam.id)[(matchDay-1) % (teams.length-1)]} onBack={() => setActiveScreen('Jogar')} matchDay={matchDay} onMatchEnd={handleMatchEnd} isFriendly={false} />;
       case 'AssistindoAmistoso': return <GameScreen userTeam={selectedTeam} opponentTeam={teams.find(t => t.id !== selectedTeam.id)!} onBack={() => { setActiveScreen('Jogar'); setFriendlyMatchScheduled(false); }} onMatchEnd={handleMatchEnd} isFriendly={true} />;
       
       // Copa das Américas Screens
