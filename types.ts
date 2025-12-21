@@ -134,6 +134,17 @@ export interface PressConferenceScreenProps {
 export interface SquadScreenProps {
   squad: Player[];
   onBack: () => void;
+  onSellPlayer: (playerId: string, price: number) => void;
+  onLoanPlayer: (playerId: string, fee: number) => void;
+  onRenewContract: (player: Player, salary: number, contractWeeks: number) => void;
+}
+
+export interface PlayerActionModalProps {
+  player: Player;
+  onClose: () => void;
+  onSell: (playerId: string, price: number) => void;
+  onLoan: (playerId: string, fee: number) => void;
+  onRenew: (player: Player, salary: number, contractWeeks: number) => void;
 }
 
 export interface TrophyRoomScreenProps {

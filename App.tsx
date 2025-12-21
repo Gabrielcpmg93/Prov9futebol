@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect, useRef } from 'react';
 import ActionListItem from './components/ActionListItem';
 import QuickActionCard from './components/QuickActionCard';
@@ -516,6 +515,27 @@ const App: React.FC = () => {
     setYouthPlayers(prevYouth => prevYouth.filter(p => p.id !== player.id));
   };
 
+  const handleSellPlayer = (playerId: string, price: number) => {
+    setSquad(prev => prev.filter(p => p.id !== playerId));
+    setBudget(prev => prev + price);
+    alert(`Jogador vendido com sucesso por ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(price)}!`);
+  };
+
+  const handleLoanPlayer = (playerId: string, fee: number) => {
+    setSquad(prev => prev.filter(p => p.id !== playerId));
+    setBudget(prev => prev + fee); // simplified: one-time fee
+    alert(`Jogador emprestado com sucesso! Taxa de ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(fee)} recebida.`);
+  };
+
+  const handleRenewContract = (playerToRenew: Player, newSalary: number, newContractWeeks: number) => {
+    setSquad(prev => prev.map(p => 
+      p.id === playerToRenew.id 
+        ? { ...p, salary: newSalary, contractWeeks: newContractWeeks } 
+        : p
+    ));
+    alert(`Contrato de ${playerToRenew.name} renovado com sucesso!`);
+  };
+
   const handleCreateCareerPlayer = (name: string, position: CareerPlayer['position']) => {
     setCareerPlayer({ name, position, teamId: null, teamName: null, goals: 0, assists: 0, matchesPlayed: 0, totalSeasonMatches: 89 });
     setActiveScreen('CareerAmateurGame');
@@ -673,7 +693,7 @@ const App: React.FC = () => {
       case 'Notícias': return <NewsScreen articles={newsArticles} onBack={() => setActiveScreen('Início')} />;
       case 'Tabela': return <TableScreen table={leagueTable} onBack={() => setActiveScreen('Início')} userTeamId={selectedTeam.id} />;
       case 'Calendário': return <CalendarScreen onBack={() => setActiveScreen('Início')} onSchedule={handleScheduleFriendlyMatch} />;
-      case 'Elenco': return <SquadScreen squad={squad} onBack={() => setActiveScreen('Início')} />;
+      case 'Elenco': return <SquadScreen squad={squad} onBack={() => setActiveScreen('Início')} onSellPlayer={handleSellPlayer} onLoanPlayer={handleLoanPlayer} onRenewContract={handleRenewContract} />;
       case 'Mercado': return <MarketScreen players={marketPlayers} onBack={() => setActiveScreen('Início')} onUpdate={handleUpdateMarket} onHire={handleHirePlayer} />;
       case 'CategoriasBase': return <YouthAcademyScreen players={youthPlayers} onBack={() => setActiveScreen('Início')} onHire={handleHirePlayer} />;
       case 'SalaTrofeus': return <TrophyRoomScreen trophies={trophies} onBack={() => setActiveScreen('Início')} />;

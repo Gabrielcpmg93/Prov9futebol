@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import type { Player, SquadScreenProps } from '../types';
-import PlayerStatsModal from '../components/PlayerStatsModal';
+import PlayerActionModal from '../components/PlayerStatsModal';
 
 const positionColors = {
   GOL: 'bg-yellow-500',
@@ -32,7 +32,7 @@ const SquadPlayerCard: React.FC<{ player: Player; onClick: () => void; }> = ({ p
   )
 }
 
-const SquadScreen: React.FC<SquadScreenProps> = ({ squad, onBack }) => {
+const SquadScreen: React.FC<SquadScreenProps> = ({ squad, onBack, onSellPlayer, onLoanPlayer, onRenewContract }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
 
@@ -72,7 +72,13 @@ const SquadScreen: React.FC<SquadScreenProps> = ({ squad, onBack }) => {
       </div>
 
       {isModalOpen && selectedPlayer && (
-        <PlayerStatsModal player={selectedPlayer} onClose={handleCloseModal} />
+        <PlayerActionModal 
+          player={selectedPlayer} 
+          onClose={handleCloseModal}
+          onSell={onSellPlayer}
+          onLoan={onLoanPlayer}
+          onRenew={onRenewContract}
+        />
       )}
     </>
   );
