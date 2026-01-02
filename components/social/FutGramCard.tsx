@@ -10,13 +10,19 @@ interface FutGramCardProps {
 
 const FutGramCard: React.FC<FutGramCardProps> = ({ post, onLike, onComment }) => {
     const [isCommentOpen, setIsCommentOpen] = useState(false);
+    const [commentText, setCommentText] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const predefinedComments = [
-        "Joga muito! 🔥",
-        "Esse é craque! ⚽",
-        "Foco total! 💪",
-        "Brabo demais.",
-    ];
+    const handleCommentSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (commentText.trim() && !isSubmitting) {
+            setIsSubmitting(true);
+            await onComment(commentText);
+            setIsCommentOpen(false);
+            setCommentText('');
+            setIsSubmitting(false);
+        }
+    }
 
     return (
         <div className="bg-white border-y border-gray-200 shadow-sm md:rounded-lg md:border-x md:mx-auto md:max-w-md">
@@ -59,33 +65,38 @@ const FutGramCard: React.FC<FutGramCardProps> = ({ post, onLike, onComment }) =>
                     <span className="font-semibold text-sm mr-2">{post.authorName}</span>
                     <span className="text-sm text-gray-800">{post.caption}</span>
                 </div>
-
+                
+                {/* Conversation Thread */}
                 {post.userComment && (
-                    <div className="mt-2 text-sm">
-                        <span className="font-semibold text-gray-900 mr-2">Você</span>
-                        <span className="text-gray-800">{post.userComment}</span>
+                    <div className="mt-2 text-sm space-y-1">
+                        <div>
+                            <span className="font-semibold text-gray-900 mr-2">Você</span>
+                            <span className="text-gray-800">{post.userComment}</span>
+                        </div>
+                        {post.authorResponse && (
+                             <div className="pl-4">
+                                <span className="font-semibold text-blue-600 mr-2">{post.authorName}</span>
+                                <span className="text-gray-800">{post.authorResponse}</span>
+                            </div>
+                        )}
                     </div>
                 )}
 
-                {/* Comment Input (Simplified as choice chips) */}
+
+                {/* Comment Input */}
                 {isCommentOpen && !post.userComment && (
-                    <div className="mt-3 pt-3 border-t border-gray-100 animate-fade-in">
-                        <p className="text-xs text-gray-500 mb-2">Comentar como Treinador:</p>
-                        <div className="flex flex-wrap gap-2">
-                            {predefinedComments.map((comment, idx) => (
-                                <button
-                                    key={idx}
-                                    onClick={() => {
-                                        onComment(comment);
-                                        setIsCommentOpen(false);
-                                    }}
-                                    className="px-3 py-1 bg-gray-100 rounded-full text-xs text-gray-700 font-medium hover:bg-blue-100 hover:text-blue-600 transition-colors"
-                                >
-                                    {comment}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
+                    <form onSubmit={handleCommentSubmit} className="mt-3 pt-3 border-t border-gray-100 flex items-center space-x-2">
+                        <input
+                            type="text"
+                            value={commentText}
+                            onChange={(e) => setCommentText(e.target.value)}
+                            placeholder="Adicione um comentário..."
+                            className="w-full bg-gray-100 border-none rounded-full px-4 py-2 text-sm focus:ring-2 focus:ring-blue-400"
+                        />
+                        <button type="submit" disabled={!commentText.trim() || isSubmitting} className="font-bold text-sm text-blue-500 disabled:text-gray-400">
+                            {isSubmitting ? '...' : 'Enviar'}
+                        </button>
+                    </form>
                 )}
             </div>
         </div>

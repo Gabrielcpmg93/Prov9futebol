@@ -6,7 +6,7 @@ import FutGramCard from './FutGramCard';
 interface FutGramFeedProps {
     feed: FutGramPost[];
     onLike: (app: 'FutGram', postId: string) => void;
-    onComment: (postId: string, comment: string) => void;
+    onComment: (postId: string, comment: string) => Promise<void>;
 }
 
 const FutGramFeed: React.FC<FutGramFeedProps> = ({ feed, onLike, onComment }) => {

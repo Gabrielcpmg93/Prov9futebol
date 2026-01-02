@@ -104,6 +104,7 @@ export interface GameMenuScreenProps {
   onStartMatch: () => void;
   isFriendlyMatchAvailable: boolean;
   onStartFriendlyMatch: () => void;
+  onStart3dMatch: () => void;
 }
 
 export interface CalendarScreenProps {
@@ -213,6 +214,7 @@ export interface FutGramPost {
   isLiked: boolean;
   commentsCount: number;
   userComment?: string;
+  authorResponse?: string;
 }
 
 export interface SocialScreenProps {
@@ -220,7 +222,7 @@ export interface SocialScreenProps {
     futGramFeed: FutGramPost[];
     onReply: (postId: string, option: ReplyOption) => void;
     onLike: (app: 'Twitta' | 'FutGram', postId: string) => void;
-    onFutGramComment: (postId: string, comment: string) => void;
+    onFutGramComment: (postId: string, comment: string) => Promise<void>;
 }
 
 // --- Copa das Américas Types ---
@@ -241,4 +243,11 @@ export interface CopaGroupStageScreenProps {
     matchQueue: Team[];
     onPlayNextMatch: () => void;
     onBack: () => void;
+}
+
+// --- Settings ---
+export interface SettingsScreenProps {
+  onBack: () => void;
+  volume: number;
+  onVolumeChange: (volume: number) => void;
 }
